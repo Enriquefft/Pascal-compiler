@@ -19,6 +19,7 @@
         packages = with pkgs; [
 
           spdlog
+          gcc
 
           pre-commit
           commitizen

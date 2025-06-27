@@ -20,50 +20,13 @@ endif()
 # Dependencies fetching
 include(FetchContent)
 
-# CROW (api)
-FetchContent_Declare(
-  Crow
-  GIT_REPOSITORY https://github.com/CrowCpp/Crow
-  GIT_TAG v1.2.0
-  SYSTEM)
-
 # Ctest
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG f8d7d77c06936315286eb55f8de22cd23c188571
   SYSTEM)
-FetchContent_MakeAvailable(Crow googletest)
-
-# # Raylib
-set(RAYLIB_VERSION 5.5)
-find_package(raylib ${RAYLIB_VERSION} QUIET)
-if(NOT raylib_FOUND)
-  message(STATUS "Raylib (C) not found, downloading latest
-version")
-
-  FetchContent_Declare(
-    raylib
-    DOWNLOAD_EXTRACT_TIMESTAMP OFF
-    URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz
-        SYSTEM)
-
-  FetchContent_MakeAvailable(raylib)
-
-endif()
-
-# raylib-cpp
-if(NOT raylib_cpp_FOUND)
-  message(STATUS "Raylib_cpp (C++) not
-found, downloading latest version")
-  FetchContent_Declare(
-    raylib_cpp
-    GIT_REPOSITORY https://github.com/RobLoach/raylib-cpp.git
-    GIT_TAG master
-    GIT_SHALLOW 1
-    SYSTEM)
-  FetchContent_MakeAvailable(raylib_cpp)
-endif()
+FetchContent_MakeAvailable(googletest)
 
 # ##############################################################################
 # Targets
@@ -177,8 +140,6 @@ else()
 endif()
 target_compile_definitions(${PROJECT_LIB} PUBLIC SPDLOG_USE_STD_FORMAT)
 #
-# link fetched libraries
-target_link_libraries(${PROJECT_LIB} PUBLIC raylib raylib_cpp Crow::Crow common)
 
 # ##############################################################################
 # link to executables
