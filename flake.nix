@@ -52,6 +52,9 @@
           xorg.libXi
           wayland-scanner
 
+          coreutils-prefixed
+          fpc
+
           (pkgs.python312.withPackages (python-pkgs: [ ]))
 
         ];

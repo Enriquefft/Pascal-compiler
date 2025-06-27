@@ -3,8 +3,8 @@ CXXFLAGS = -std=c++23 -Wall -Wextra -Iinclude -Isrc
 SRC = $(wildcard src/*.cpp src/compiler/*.cpp)
 TEST_SRC = tests/sample.cpp
 BUILD_DIR = build
-TARGET = $(BUILD_DIR)/compiler
-TEST_BIN = $(BUILD_DIR)/tests
+TARGET = $(CXX)
+TEST_BIN = gtest
 
 all: compiler
 
