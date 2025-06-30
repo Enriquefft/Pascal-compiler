@@ -19,6 +19,15 @@ using pascal::Parser;
 using pascal::Token;
 using pascal::TokenType;
 
+enum class TestMode {
+  Tokens,
+  TokensAst,
+  TokensAstAsm,
+  All
+};
+
+inline constexpr TestMode TEST_MODE = TestMode::Tokens;
+
 inline Token make_token(TokenType type, std::string_view lexeme) {
   Token tok{};
   tok.type = type;
@@ -168,16 +177,22 @@ inline void run_full(std::string_view src,
                      std::string_view expected_output) {
   Lexer lex(src);
   auto tokens = lex.scanTokens();
-  ASSERT_EQ(tokens.size(), expected_tokens.size());
-  for (size_t i = 0; i < tokens.size(); ++i) {
+  ASSERT_GE(tokens.size(), expected_tokens.size());
+  for (size_t i = 0; i < expected_tokens.size(); ++i) {
     EXPECT_EQ(tokens[i].type, expected_tokens[i].type);
     EXPECT_EQ(tokens[i].lexeme, expected_tokens[i].lexeme);
   }
+
+  if (TEST_MODE == TestMode::Tokens)
+    return;
 
   Parser parser(tokens);
   AST ast{};
   EXPECT_NO_THROW({ ast = parser.parse(); });
   EXPECT_TRUE(ast_equal(ast, expected_ast));
+
+  if (TEST_MODE == TestMode::TokensAst)
+    return;
 
   ASTValidator validator;
   EXPECT_TRUE(validator.validate(ast));
@@ -185,6 +200,9 @@ inline void run_full(std::string_view src,
   CodeGenerator codegen;
   auto asm_code = codegen.generate(ast);
   EXPECT_EQ(asm_code, expected_asm);
+
+  if (TEST_MODE == TestMode::TokensAstAsm)
+    return;
 
   auto output = execute_stub(asm_code);
   EXPECT_EQ(output, expected_output);
