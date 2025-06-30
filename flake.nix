@@ -52,6 +52,7 @@
           xorg.libXi
           wayland-scanner
 
+          bear
           (pkgs.python312.withPackages (python-pkgs: [ ]))
 
         ];
