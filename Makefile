@@ -26,7 +26,7 @@ endif
 
 CXXFLAGS = -std=c++23 $(WARN) $(OPT) -Iinclude -Isrc
 SRC_ALL = $(wildcard src/*.cpp src/token/*.cpp src/scanner/*.cpp \
-                       src/parser/*.cpp src/visitors/*.cpp)
+                       src/parser/*.cpp src/visitors/*.cpp src/executor/*.cpp)
 SRC = $(SRC_ALL)
 SRC_TEST = $(filter-out src/main.cpp,$(SRC_ALL))
 TEST_SRC = $(wildcard tests/*.cpp)

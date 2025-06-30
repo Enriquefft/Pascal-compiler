@@ -1,17 +1,13 @@
-#ifndef PASCAL_COMPILER_CODEGEN_HPP
-#define PASCAL_COMPILER_CODEGEN_HPP
-
-#include <string>
+#ifndef PASCAL_COMPILER_VALIDATOR_HPP
+#define PASCAL_COMPILER_VALIDATOR_HPP
 
 #include "parser/ast.hpp"
 
 namespace pascal {
 
-class AST;
-
-class CodeGenerator : public NodeVisitor {
+class ASTValidator : public NodeVisitor {
 public:
-  [[nodiscard]] std::string generate(const AST &ast);
+  bool validate(const AST &ast);
 
   void visitProgram(const Program & /*node*/) override {}
   void visitBlock(const Block & /*node*/) override {}
@@ -36,11 +32,9 @@ public:
   void visitVariableExpr(const VariableExpr & /*node*/) override {}
 
 private:
-  void emit(const std::string &text);
-
-  std::string m_output;
+  bool m_valid{true};
 };
 
 } // namespace pascal
 
-#endif // PASCAL_COMPILER_CODEGEN_HPP
+#endif // PASCAL_COMPILER_VALIDATOR_HPP

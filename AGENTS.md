@@ -20,6 +20,16 @@ This repository contains a Pascal compiler implemented in **C++23**. A simple **
 4. Make small, focused commits using the prefixes `feat:`, `fix:`, `style:` or `chore:`.
 5. Pull request summaries must describe key changes and cite updated files. Include test output in the testing section.
 
+## Development Guidelines
+
+- Only modify header files (`*.hpp`) when extending the compiler API. Source
+  files under `src/` can remain stub implementations.
+- Ensure headers declare all types and functions necessary to support the full
+  Pascal grammar described in `README.md`.
+- Tests rely on hard‑coded expectations for tokens, AST validity, generated
+  assembly, and execution output. Keep the helper utilities under `tests/`
+  working.
+
 ## Code Style
 
 - Use clear comments and keep lines under 80 characters when possible.
