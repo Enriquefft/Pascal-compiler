@@ -19,85 +19,9 @@ using pascal::Parser;
 using pascal::Token;
 using pascal::TokenType;
 
-enum class TestMode {
-  Tokens,
-  TokensAst,
-  TokensAstAsm,
-  All
-};
+enum class TestMode { Tokens, TokensAst, TokensAstAsm, All };
 
 inline constexpr TestMode TEST_MODE = TestMode::Tokens;
-
-inline Token make_token(TokenType type, std::string_view lexeme) {
-  Token tok{};
-  tok.type = type;
-  tok.lexeme = std::string(lexeme);
-  return tok;
-}
-
-inline Token make_token(std::string_view text) {
-  Token tok{};
-  if (!text.empty() && std::isdigit(static_cast<unsigned char>(text.front()))) {
-    tok.type = TokenType::Number;
-  } else if (!text.empty() && text.front() == '\'' && text.back() == '\'') {
-    tok.type = TokenType::String;
-  } else {
-    tok.type = TokenType::Identifier;
-  }
-  tok.lexeme = std::string(text);
-  return tok;
-}
-
-inline std::vector<Token> naive_tokenize(std::string_view src) {
-  std::vector<Token> tokens;
-  std::string current;
-  for (char c : src) {
-    if (std::isspace(static_cast<unsigned char>(c))) {
-      if (!current.empty()) {
-        tokens.push_back(make_token(current));
-        current.clear();
-      }
-    } else if (std::ispunct(static_cast<unsigned char>(c))) {
-      if (!current.empty()) {
-        tokens.push_back(make_token(current));
-        current.clear();
-      }
-      std::string s(1, c);
-      tokens.push_back(make_token(s));
-    } else {
-      current.push_back(c);
-    }
-  }
-  if (!current.empty()) {
-    tokens.push_back(make_token(current));
-  }
-  tokens.push_back({TokenType::EndOfFile, ""});
-  return tokens;
-}
-
-inline std::vector<Token> default_tokens(std::string_view src) {
-  return naive_tokenize(src);
-}
-
-inline std::vector<Token>
-tokens(std::initializer_list<std::string_view> lexemes) {
-  std::vector<Token> result;
-  for (auto l : lexemes) {
-    result.push_back(make_token(l));
-  }
-  result.push_back({TokenType::EndOfFile, ""});
-  return result;
-}
-
-inline std::vector<Token>
-tokens(std::initializer_list<std::pair<TokenType, std::string_view>> items) {
-  std::vector<Token> result;
-  for (auto [type, lex] : items) {
-    result.push_back(make_token(type, lex));
-  }
-  result.push_back({TokenType::EndOfFile, ""});
-  return result;
-}
 
 inline std::string execute_stub(std::string_view /*asm_code*/) { return {}; }
 
@@ -177,7 +101,7 @@ inline void run_full(std::string_view src,
                      std::string_view expected_output) {
   Lexer lex(src);
   auto tokens = lex.scanTokens();
-  ASSERT_GE(tokens.size(), expected_tokens.size());
+  ASSERT_EQ(tokens.size(), expected_tokens.size());
   for (size_t i = 0; i < expected_tokens.size(); ++i) {
     EXPECT_EQ(tokens[i].type, expected_tokens[i].type);
     EXPECT_EQ(tokens[i].lexeme, expected_tokens[i].lexeme);
