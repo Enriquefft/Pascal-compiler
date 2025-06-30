@@ -31,54 +31,107 @@ generate assembly.
 ## Pascal Grammar
 
 ```ebnf
-program        = 'program' identifier ';' block '.' ;
-block          = declaration_part 'begin' statement_list 'end' ;
-declaration_part = { const_section | type_section | var_section | routine_decl } ;
-const_section  = 'const' const_def { const_def } ;
-const_def      = identifier '=' constant ';' ;
-type_section   = 'type' type_def { type_def } ;
-type_def       = identifier '=' type_spec ';' ;
-var_section    = 'var' var_decl { var_decl } ;
-var_decl       = identifier_list ':' type_spec ';' ;
-routine_decl   = procedure_decl | function_decl ;
-procedure_decl = 'procedure' identifier param_list? ';' block ';' ;
-function_decl  = 'function' identifier param_list? ':' type_spec ';' block ';' ;
-param_list     = '(' param_decl { ';' param_decl } ')' ;
-param_decl     = identifier_list ':' type_spec ;
+program         = 'program' identifier [ '(' identifier_list ')' ] ';' block '.' ;
+
+block           = declaration_part 'begin' statement_list 'end' ;
+
+declaration_part= [ const_section ]
+                [ type_section ]
+                [ var_section ]
+                { routine_decl } ;
+
+const_section   = 'const' const_def { const_def } ;
+const_def       = identifier '=' constant ';' ;
+
+type_section    = 'type' type_def { type_def } ;
+type_def        = identifier '=' type_spec ';' ;
+
+var_section     = 'var' var_decl { var_decl } ;
+var_decl        = identifier_list ':' type_spec ';' ;
+
+routine_decl    = procedure_decl | function_decl ;
+procedure_decl  = 'procedure' identifier param_list? ';' block ';' ;
+function_decl   = 'function' identifier param_list? ':' type_spec ';' block ';' ;
+
+param_list      = '(' param_decl { ';' param_decl } ')' ;
+param_decl      = identifier_list ':' type_spec ;
 identifier_list = identifier { ',' identifier } ;
-type_spec      = simple_type | array_type | record_type | pointer_type ;
-simple_type    = 'integer' | 'longint' | 'unsigned' | 'real' | 'string' | identifier ;
-array_type     = 'array' '[' range ']' 'of' type_spec ;
-range          = number '..' number ;
-record_type    = 'record' var_decl { var_decl } 'end' ;
-pointer_type   = '^' type_spec ;
-statement_list = statement { ';' statement } ;
-statement      = assignment | procedure_call | compound
-                 | if_stmt | while_stmt | for_stmt
-                 | repeat_stmt | case_stmt | with_stmt ;
-compound       = 'begin' statement_list 'end' ;
-assignment     = variable ':=' expression ;
-procedure_call = identifier '(' expression_list? ')' ;
-if_stmt        = 'if' expression 'then' statement [ 'else' statement ] ;
-while_stmt     = 'while' expression 'do' statement ;
-for_stmt       = 'for' assignment 'to' expression 'do' statement ;
-repeat_stmt    = 'repeat' statement_list 'until' expression ;
-case_stmt      = 'case' expression 'of' case_list 'end' ;
-case_list      = case_label ':' statement { ';' case_label ':' statement } ;
-case_label     = constant { ',' constant } ;
-with_stmt      = 'with' variable 'do' statement ;
-expression_list= expression { ',' expression } ;
-expression     = simple_expression [ relop simple_expression ] ;
-simple_expression = term { addop term } ;
-term           = factor { mulop factor } ;
-factor         = variable | number | string | '(' expression ')'
-                 | 'not' factor | 'new' '(' variable ')'
-                 | 'dispose' '(' variable ')' ;
-variable       = identifier { selector } ;
-selector       = '.' identifier | '[' expression ']' | '^' ;
-addop          = '+' | '-' | 'or' ;
-mulop          = '*' | '/' | 'div' | 'mod' | 'and' ;
-relop          = '=' | '<>' | '<' | '<=' | '>' | '>=' ;
+
+type_spec       = simple_type
+                | array_type
+                | record_type
+                | pointer_type ;
+
+simple_type     = 'integer'
+                | 'longint'
+                | 'unsigned'
+                | 'real'
+                | 'string'
+                | identifier ;
+
+array_type      = 'array' { '[' range ']' } 'of' type_spec ;
+range           = number '..' number ;
+
+record_type     = 'record' var_decl { var_decl } 'end' ;
+
+pointer_type    = '^' identifier ;
+
+statement_list  = statement { ';' statement } ;
+
+statement       = assignment
+                | procedure_call
+                | compound
+                | if_stmt
+                | while_stmt
+                | for_stmt
+                | repeat_stmt
+                | case_stmt
+                | with_stmt ;
+
+compound        = 'begin' statement_list 'end' ;
+
+assignment      = variable ':=' expression ;
+
+procedure_call  = identifier '(' expression_list? ')' ;
+
+if_stmt         = 'if' expression 'then' statement [ 'else' statement ] ;
+
+while_stmt      = 'while' expression 'do' statement ;
+
+for_stmt        = 'for' assignment ( 'to' | 'downto' ) expression 'do' statement ;
+
+repeat_stmt     = 'repeat' statement_list 'until' expression ;
+
+case_stmt       = 'case' expression 'of' case_list 'end' ;
+case_list       = case_label ':' statement { ';' case_label ':' statement } ;
+case_label      = constant { ',' constant } ;
+
+with_stmt       = 'with' variable 'do' statement ;
+
+expression_list = expression { ',' expression } ;
+
+expression      = simple_expression [ relop simple_expression ] ;
+simple_expression= [ addop ] term { addop term } ;
+term            = factor { mulop factor } ;
+
+factor          = variable
+                | number
+                | string
+                | '(' expression ')'
+                | 'not' factor
+                | 'new' '(' variable ')'
+                | 'dispose' '(' variable ')' ;
+
+variable        = identifier { selector } ;
+selector        = '.' identifier
+                | '[' expression ']'
+                | '^' ;
+
+addop           = '+' | '-' | 'or' ;
+mulop           = '*' | '/' | 'div' | 'mod' | 'and' ;
+relop           = '=' | '<>' | '<' | '<=' | '>' | '>=' ;
+
+constant        = number | string | identifier ;
 ```
 
 ## Extensions
