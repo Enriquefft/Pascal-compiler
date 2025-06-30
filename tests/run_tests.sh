@@ -10,4 +10,3 @@ if [ ! -x "$TEST_BIN" ]; then
 fi
 
 "$TEST_BIN"
-
