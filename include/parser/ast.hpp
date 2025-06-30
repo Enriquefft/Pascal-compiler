@@ -138,7 +138,12 @@ struct Program : ASTNode {
 
   ~Program();
 
-  void accept(NodeVisitor &v) const override { v.visitProgram(*this); }
+  /**
+ * @brief Accepts a visitor to process this Program node.
+ *
+ * Invokes the visitor's visitProgram method, enabling traversal or processing of the Program node in the AST.
+ */
+void accept(NodeVisitor &v) const override { v.visitProgram(*this); }
 };
 
 struct Block : ASTNode {
@@ -163,7 +168,12 @@ struct VarDecl : Declaration {
 
   ~VarDecl();
 
-  void accept(NodeVisitor &v) const override { v.visitVarDecl(*this); }
+  /**
+ * @brief Accepts a visitor to process this variable declaration node.
+ *
+ * Invokes the visitor's visit method for a variable declaration.
+ */
+void accept(NodeVisitor &v) const override { v.visitVarDecl(*this); }
 };
 
 struct ConstDecl : Declaration {
@@ -187,7 +197,12 @@ struct TypeDecl : Declaration {
 
   ~TypeDecl();
 
-  void accept(NodeVisitor &v) const override { v.visitTypeDecl(*this); }
+  /**
+ * @brief Accepts a visitor to process this type declaration node.
+ *
+ * Invokes the visitor's visit method for a type declaration.
+ */
+void accept(NodeVisitor &v) const override { v.visitTypeDecl(*this); }
 };
 
 struct ProcedureDecl : Declaration {
@@ -201,7 +216,12 @@ struct ProcedureDecl : Declaration {
 
   ~ProcedureDecl();
 
-  void accept(NodeVisitor &v) const override { v.visitProcedureDecl(*this); }
+  /**
+ * @brief Accepts a node visitor to process this procedure declaration node.
+ *
+ * Invokes the visitor's visit method for a procedure declaration, enabling traversal or processing via the visitor pattern.
+ */
+void accept(NodeVisitor &v) const override { v.visitProcedureDecl(*this); }
 };
 
 struct ParamDecl : Declaration {
@@ -213,7 +233,12 @@ struct ParamDecl : Declaration {
 
   ~ParamDecl();
 
-  void accept(NodeVisitor &v) const override { v.visitParamDecl(*this); }
+  /**
+ * @brief Accepts a visitor to process this parameter declaration node.
+ *
+ * Invokes the visitor's visit method for parameter declarations, enabling traversal or processing via the visitor pattern.
+ */
+void accept(NodeVisitor &v) const override { v.visitParamDecl(*this); }
 };
 
 struct FunctionDecl : Declaration {
@@ -228,7 +253,12 @@ struct FunctionDecl : Declaration {
 
   ~FunctionDecl();
 
-  void accept(NodeVisitor &v) const override { v.visitFunctionDecl(*this); }
+  /**
+ * @brief Accepts a visitor to process this function declaration node.
+ *
+ * Invokes the visitor's visit method for a function declaration, enabling traversal or processing via the visitor pattern.
+ */
+void accept(NodeVisitor &v) const override { v.visitFunctionDecl(*this); }
 };
 
 struct CompoundStmt : Statement {
@@ -328,7 +358,12 @@ struct CaseStmt : Statement {
 
   ~CaseStmt();
 
-  void accept(NodeVisitor &v) const override { v.visitCaseStmt(*this); }
+  /**
+ * @brief Accepts a visitor to process this case statement node.
+ *
+ * Invokes the visitor's visit method for a case statement, enabling traversal or processing via the visitor pattern.
+ */
+void accept(NodeVisitor &v) const override { v.visitCaseStmt(*this); }
 };
 
 struct WithStmt : Statement {
@@ -439,7 +474,12 @@ struct ArrayTypeSpec : TypeSpec {
 
   ~ArrayTypeSpec();
 
-  void accept(NodeVisitor &v) const override { v.visitArrayTypeSpec(*this); }
+  /**
+ * @brief Accepts a visitor to process this array type specification node.
+ *
+ * Invokes the visitor's visit method for an ArrayTypeSpec node, enabling traversal or processing via the visitor pattern.
+ */
+void accept(NodeVisitor &v) const override { v.visitArrayTypeSpec(*this); }
 };
 
 struct RecordTypeSpec : TypeSpec {
@@ -460,7 +500,12 @@ struct PointerTypeSpec : TypeSpec {
 
   ~PointerTypeSpec();
 
-  void accept(NodeVisitor &v) const override { v.visitPointerTypeSpec(*this); }
+  /**
+ * @brief Accepts a visitor to process this pointer type specification node.
+ *
+ * Invokes the visitor's visit method for a pointer type specification, enabling traversal or processing via the visitor pattern.
+ */
+void accept(NodeVisitor &v) const override { v.visitPointerTypeSpec(*this); }
 };
 
 struct CaseLabel : ASTNode {
@@ -501,61 +546,179 @@ struct AST {
   bool valid{false};
 };
 
+/**
+ * @brief Constructs an empty Program AST node.
+ *
+ * Initializes a Program node with default values.
+ */
 inline Program::Program() : ASTNode(NodeKind::Program) {}
-inline Program::Program(std::string n, std::unique_ptr<Block> b)
+/**
+     * @brief Constructs a Program AST node with the given name and block.
+     *
+     * @param n The name of the program.
+     * @param b The block representing the program's body.
+     */
+    inline Program::Program(std::string n, std::unique_ptr<Block> b)
     : ASTNode(NodeKind::Program), name(std::move(n)), block(std::move(b)) {}
+/**
+ * @brief Destroys the Program node and releases its owned resources.
+ */
 inline Program::~Program() = default;
 
+/**
+ * @brief Constructs an empty variable declaration node.
+ */
 inline VarDecl::VarDecl() : Declaration(NodeKind::VarDecl) {}
-inline VarDecl::VarDecl(std::vector<std::string> n, std::unique_ptr<TypeSpec> t)
+/**
+     * @brief Constructs a variable declaration node with specified variable names and type.
+     *
+     * @param n List of variable names being declared.
+     * @param t Type specification for the declared variables.
+     */
+    inline VarDecl::VarDecl(std::vector<std::string> n, std::unique_ptr<TypeSpec> t)
     : Declaration(NodeKind::VarDecl), names(std::move(n)), type(std::move(t)) {}
+/**
+ * @brief Destroys the VarDecl node and releases its resources.
+ */
 inline VarDecl::~VarDecl() = default;
 
+/**
+ * @brief Constructs an empty type declaration node.
+ */
 inline TypeDecl::TypeDecl() : Declaration(NodeKind::TypeDecl) {}
-inline TypeDecl::TypeDecl(std::string n, std::unique_ptr<TypeSpec> t)
+/**
+     * @brief Constructs a type declaration node with the given name and type specification.
+     *
+     * @param n The name of the type being declared.
+     * @param t The type specification associated with the type declaration.
+     */
+    inline TypeDecl::TypeDecl(std::string n, std::unique_ptr<TypeSpec> t)
     : Declaration(NodeKind::TypeDecl), name(std::move(n)), type(std::move(t)) {}
+/**
+ * @brief Destroys the TypeDecl node and releases its resources.
+ */
 inline TypeDecl::~TypeDecl() = default;
 
+/**
+ * @brief Constructs an empty procedure declaration node.
+ */
 inline ProcedureDecl::ProcedureDecl() : Declaration(NodeKind::ProcedureDecl) {}
-inline ProcedureDecl::ProcedureDecl(std::string n,
+/**
+       * @brief Constructs a procedure declaration node with the given name, parameters, and body.
+       *
+       * @param n The name of the procedure.
+       * @param p The list of parameter declarations for the procedure.
+       * @param b The body of the procedure as a block node.
+       */
+      inline ProcedureDecl::ProcedureDecl(std::string n,
                                     std::vector<std::unique_ptr<ParamDecl>> p,
                                     std::unique_ptr<Block> b)
     : Declaration(NodeKind::ProcedureDecl), name(std::move(n)),
       params(std::move(p)), body(std::move(b)) {}
+/**
+ * @brief Destroys the ProcedureDecl node and releases owned resources.
+ */
 inline ProcedureDecl::~ProcedureDecl() = default;
 
+/**
+ * @brief Constructs an empty parameter declaration node.
+ */
 inline ParamDecl::ParamDecl() : Declaration(NodeKind::ParamDecl) {}
-inline ParamDecl::ParamDecl(std::vector<std::string> n,
+/**
+       * @brief Constructs a parameter declaration with specified names and type.
+       *
+       * @param n List of parameter names.
+       * @param t Type specification for the parameters.
+       */
+      inline ParamDecl::ParamDecl(std::vector<std::string> n,
                             std::unique_ptr<TypeSpec> t)
     : Declaration(NodeKind::ParamDecl), names(std::move(n)),
       type(std::move(t)) {}
+/**
+ * @brief Destroys the ParamDecl node and releases its resources.
+ */
 inline ParamDecl::~ParamDecl() = default;
 
+/**
+ * @brief Constructs an empty function declaration node.
+ *
+ * Initializes a function declaration AST node with default values.
+ */
 inline FunctionDecl::FunctionDecl() : Declaration(NodeKind::FunctionDecl) {}
-inline FunctionDecl::FunctionDecl(std::string n,
+/**
+       * @brief Constructs a function declaration node with the specified name, parameters, return type, and body.
+       *
+       * @param n The function's name.
+       * @param p The list of parameter declarations.
+       * @param r The return type specification.
+       * @param b The function body block.
+       */
+      inline FunctionDecl::FunctionDecl(std::string n,
                                   std::vector<std::unique_ptr<ParamDecl>> p,
                                   std::unique_ptr<TypeSpec> r,
                                   std::unique_ptr<Block> b)
     : Declaration(NodeKind::FunctionDecl), name(std::move(n)),
       params(std::move(p)), returnType(std::move(r)), body(std::move(b)) {}
+/**
+ * @brief Destroys the FunctionDecl node and its owned resources.
+ */
 inline FunctionDecl::~FunctionDecl() = default;
 
+/**
+ * @brief Constructs an empty array type specification node.
+ */
 inline ArrayTypeSpec::ArrayTypeSpec() : TypeSpec(NodeKind::ArrayTypeSpec) {}
-inline ArrayTypeSpec::ArrayTypeSpec(std::vector<Range> r,
+/**
+       * @brief Constructs an array type specification with given ranges and element type.
+       *
+       * @param r List of index ranges for the array dimensions.
+       * @param elem Type specification for the array elements.
+       */
+      inline ArrayTypeSpec::ArrayTypeSpec(std::vector<Range> r,
                                     std::unique_ptr<TypeSpec> elem)
     : TypeSpec(NodeKind::ArrayTypeSpec), ranges(std::move(r)),
       elementType(std::move(elem)) {}
+/**
+ * @brief Destroys the ArrayTypeSpec node and releases its resources.
+ */
 inline ArrayTypeSpec::~ArrayTypeSpec() = default;
 
-inline PointerTypeSpec::PointerTypeSpec()
+/**
+     * @brief Constructs a pointer type specification node.
+     *
+     * Initializes a PointerTypeSpec AST node representing a pointer type in Pascal.
+     */
+    inline PointerTypeSpec::PointerTypeSpec()
     : TypeSpec(NodeKind::PointerTypeSpec) {}
-inline PointerTypeSpec::PointerTypeSpec(std::unique_ptr<TypeSpec> r)
+/**
+     * @brief Constructs a pointer type specification referencing another type.
+     *
+     * @param r Unique pointer to the referenced type specification.
+     */
+    inline PointerTypeSpec::PointerTypeSpec(std::unique_ptr<TypeSpec> r)
     : TypeSpec(NodeKind::PointerTypeSpec), refType(std::move(r)) {}
+/**
+ * @brief Destroys the PointerTypeSpec node and releases owned resources.
+ */
 inline PointerTypeSpec::~PointerTypeSpec() = default;
+/**
+ * @brief Constructs an empty case statement node.
+ *
+ * Initializes a case statement AST node with default values.
+ */
 inline CaseStmt::CaseStmt() : Statement(NodeKind::CaseStmt) {}
-inline CaseStmt::CaseStmt(std::unique_ptr<Expression> e,
+/**
+     * @brief Constructs a case statement node with a controlling expression and case labels.
+     *
+     * @param e The expression to evaluate for case selection.
+     * @param c The list of case labels, each associated with a statement to execute.
+     */
+    inline CaseStmt::CaseStmt(std::unique_ptr<Expression> e,
                           std::vector<std::unique_ptr<CaseLabel>> c)
     : Statement(NodeKind::CaseStmt), expr(std::move(e)), cases(std::move(c)) {}
+/**
+ * @brief Destroys the CaseStmt node and releases its resources.
+ */
 inline CaseStmt::~CaseStmt() = default;
 
 } // namespace pascal
