@@ -54,6 +54,7 @@
 
           bear
           (pkgs.python312.withPackages (python-pkgs: [ ]))
+          crow
 
         ];
 

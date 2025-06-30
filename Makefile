@@ -1,4 +1,4 @@
-CXX ?= g++
+CXX ?= clang++
 MODE ?= debug
 
 # THROW_ON_ERROR = -Werror
@@ -27,12 +27,16 @@ endif
 CXXFLAGS = -std=c++23 $(WARN) $(OPT) -Iinclude -Isrc
 SRC_ALL = $(wildcard src/*.cpp src/token/*.cpp src/scanner/*.cpp \
                        src/parser/*.cpp src/visitors/*.cpp src/executor/*.cpp)
-SRC = $(SRC_ALL)
+SRC = $(filter-out src/api.cpp,$(SRC_ALL))
+
+API_SRC = $(filter-out src/main.cpp,$(SRC_ALL))
+
 SRC_TEST = $(filter-out src/main.cpp,$(SRC_ALL))
 TEST_SRC = $(wildcard tests/*.cpp)
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/compiler
 TEST_BIN = $(BUILD_DIR)/tests
+API_BIN = $(BUILD_DIR)/api
 
 all: compiler
 
@@ -45,6 +49,10 @@ $(TARGET): $(SRC) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
 
 .PHONY: tests clean
+
+api: $(API_BIN)
+$(API_BIN): $(API_SRC) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(API_SRC) -o $(API_BIN)
 
 tests: $(TEST_BIN)
 
