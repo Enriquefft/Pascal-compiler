@@ -34,6 +34,15 @@ public:
   void visitUnaryExpr(const UnaryExpr & /*node*/) override {}
   void visitLiteralExpr(const LiteralExpr & /*node*/) override {}
   void visitVariableExpr(const VariableExpr & /*node*/) override {}
+  void visitRange(const Range & /*node*/) override {}
+  void visitTypeSpec(const TypeSpec & /*node*/) override {}
+  void visitSimpleTypeSpec(const SimpleTypeSpec & /*node*/) override {}
+  void visitArrayTypeSpec(const ArrayTypeSpec & /*node*/) override {}
+  void visitRecordTypeSpec(const RecordTypeSpec & /*node*/) override {}
+  void visitPointerTypeSpec(const PointerTypeSpec & /*node*/) override {}
+  void visitCaseLabel(const CaseLabel & /*node*/) override {}
+  void visitNewExpr(const NewExpr & /*node*/) override {}
+  void visitDisposeExpr(const DisposeExpr & /*node*/) override {}
 
 private:
   void emit(const std::string &text);
