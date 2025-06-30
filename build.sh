@@ -1,3 +1,4 @@
-export CXX=g++
-export CC=gcc
-rm -rf build && cmake -S . -B build && cmake --build build
+#!/bin/sh
+export CXX=${CXX:-g++}
+make clean
+make compiler

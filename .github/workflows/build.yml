@@ -1,0 +1,21 @@
+name: Build
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y clang g++ libgtest-dev
+      - name: Build
+        run: make compiler
+      - name: Test
+        run: make tests
+      - name: Clean
+        run: make clean
