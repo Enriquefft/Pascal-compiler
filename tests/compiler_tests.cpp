@@ -2372,3 +2372,109 @@ TEST(PointerTests, Ptr5) {
     run_full(input_str, expected_tokens, expected_ast, expected_asm,
              expected_output);
 }
+
+// Print output tests
+TEST(PrintTests, PrintString) {
+    std::string input_str = "writeln('hello');";
+    std::vector<Token> expected_tokens = {
+        {TT::Identifier, "writeln"}, {TT::LeftParen, "("},
+        {TT::Identifier, "'"},        {TT::Identifier, "hello"},
+        {TT::Identifier, "'"},        {TT::RightParen, ")"},
+        {TT::Semicolon, ";"},         {TT::EndOfFile, ""}};
+    AST expected_ast{};
+    expected_ast.root = std::make_unique<pascal::Program>(
+        "test", std::make_unique<pascal::Block>(
+                    std::vector<std::unique_ptr<pascal::Declaration>>{},
+                    std::vector<std::unique_ptr<pascal::Statement>>{
+                        std::make_unique<pascal::ProcCall>(
+                            "writeln",
+                            std::vector<std::unique_ptr<pascal::Expression>>{
+                                std::make_unique<pascal::LiteralExpr>(
+                                    "'hello'")})}));
+    expected_ast.valid = true;
+    std::string expected_asm =
+        "section .data\n"
+        "str0: db \"hello\", 0\n\n"
+        "section .text\n"
+        "extern puts\n"
+        "global main\n"
+        "main:\n"
+        "    mov    rdi, str0\n"
+        "    call   puts\n"
+        "    ret\n";
+    std::string expected_output = "hello\n";
+    run_full(input_str, expected_tokens, expected_ast, expected_asm,
+             expected_output);
+}
+
+TEST(PrintTests, PrintIntLiteral) {
+    std::string input_str = "writeln(123);";
+    std::vector<Token> expected_tokens = {
+        {TT::Identifier, "writeln"}, {TT::LeftParen, "("},
+        {TT::Number, "123"},          {TT::RightParen, ")"},
+        {TT::Semicolon, ";"},         {TT::EndOfFile, ""}};
+    AST expected_ast{};
+    expected_ast.root = std::make_unique<pascal::Program>(
+        "test", std::make_unique<pascal::Block>(
+                    std::vector<std::unique_ptr<pascal::Declaration>>{},
+                    std::vector<std::unique_ptr<pascal::Statement>>{
+                        std::make_unique<pascal::ProcCall>(
+                            "writeln",
+                            std::vector<std::unique_ptr<pascal::Expression>>{
+                                std::make_unique<pascal::LiteralExpr>("123")})}));
+    expected_ast.valid = true;
+    std::string expected_asm =
+        "section .data\n"
+        "fmt_int: db \"%d\", 10, 0\n\n"
+        "section .text\n"
+        "extern printf\n"
+        "global main\n"
+        "main:\n"
+        "    mov    rdi, fmt_int\n"
+        "    mov    rsi, 123\n"
+        "    xor    rax, rax\n"
+        "    call   printf\n"
+        "    ret\n";
+    std::string expected_output = "123\n";
+    run_full(input_str, expected_tokens, expected_ast, expected_asm,
+             expected_output);
+}
+
+TEST(PrintTests, PrintIntExpr) {
+    std::string input_str = "writeln(10+20);";
+    std::vector<Token> expected_tokens = {
+        {TT::Identifier, "writeln"}, {TT::LeftParen, "("},
+        {TT::Number, "10"},           {TT::Plus, "+"},
+        {TT::Number, "20"},           {TT::RightParen, ")"},
+        {TT::Semicolon, ";"},         {TT::EndOfFile, ""}};
+    AST expected_ast{};
+    expected_ast.root = std::make_unique<pascal::Program>(
+        "test", std::make_unique<pascal::Block>(
+                    std::vector<std::unique_ptr<pascal::Declaration>>{},
+                    std::vector<std::unique_ptr<pascal::Statement>>{
+                        std::make_unique<pascal::ProcCall>(
+                            "writeln",
+                            std::vector<std::unique_ptr<pascal::Expression>>{
+                                std::make_unique<pascal::BinaryExpr>(
+                                    std::make_unique<pascal::LiteralExpr>("10"),
+                                    "+",
+                                    std::make_unique<pascal::LiteralExpr>(
+                                        "20"))})}));
+    expected_ast.valid = true;
+    std::string expected_asm =
+        "section .data\n"
+        "fmt_int: db \"%d\", 10, 0\n\n"
+        "section .text\n"
+        "extern printf\n"
+        "global main\n"
+        "main:\n"
+        "    mov    rdi, fmt_int\n"
+        "    mov    rsi, 10\n"
+        "    add    rsi, 20\n"
+        "    xor    rax, rax\n"
+        "    call   printf\n"
+        "    ret\n";
+    std::string expected_output = "30\n";
+    run_full(input_str, expected_tokens, expected_ast, expected_asm,
+             expected_output);
+}
