@@ -5,7 +5,6 @@ using pascal::AST;
 using pascal::Lexer;
 using pascal::Parser;
 using pascal::Token;
-using test_utils::make_empty_ast;
 using test_utils::run_full;
 using TT = pascal::TokenType;
 
@@ -16,8 +15,10 @@ TEST(VarDeclTests, Decl1) {
                           {TT::Identifier, "a"},
                           {TT::Colon, ":"},
                           {TT::Identifier, "integer"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var a: integer;", expected_tokens, expected_ast, expected_asm,
@@ -30,8 +31,10 @@ TEST(VarDeclTests, Decl2) {
                           {TT::Identifier, "b"},
                           {TT::Colon, ":"},
                           {TT::Identifier, "real"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var b: real;", expected_tokens, expected_ast, expected_asm,
@@ -44,8 +47,10 @@ TEST(VarDeclTests, Decl3) {
                           {TT::Identifier, "c"},
                           {TT::Colon, ":"},
                           {TT::Identifier, "unsigned"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var c: unsigned;", expected_tokens, expected_ast, expected_asm,
@@ -62,8 +67,10 @@ TEST(ExpressionTests, Expr1) {
                           {TT::Number, "1"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Dot, "."}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Dot, "."},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("begin a := 1; end.", expected_tokens, expected_ast, expected_asm,
@@ -81,8 +88,10 @@ TEST(ExpressionTests, Expr2) {
                           {TT::Number, "1"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Dot, "."}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Dot, "."},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("begin b := a + 1; end.", expected_tokens, expected_ast,
@@ -100,8 +109,10 @@ TEST(ExpressionTests, Expr3) {
                           {TT::Number, "2"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Dot, "."}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Dot, "."},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("begin c := b * 2; end.", expected_tokens, expected_ast,
@@ -120,8 +131,10 @@ TEST(ControlTests, IfStmt) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("if a > 0 then b := 1;", expected_tokens, expected_ast, expected_asm,
@@ -143,8 +156,10 @@ TEST(ControlTests, IfElse) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "2"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("if a > 0 then b := 1 else b := 2;", expected_tokens, expected_ast,
@@ -163,8 +178,10 @@ TEST(ControlTests, CaseStmt) {
                           {TT::Number, "1"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("case a of 1: b := 1; end;", expected_tokens, expected_ast,
@@ -183,8 +200,10 @@ TEST(ControlTests, WhileStmt) {
                           {TT::Identifier, "a"},
                           {TT::Minus, "-"},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("while a > 0 do a := a - 1;", expected_tokens, expected_ast,
@@ -204,8 +223,10 @@ TEST(ControlTests, ForStmt) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Identifier, "i"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("for i:=1 to 10 do a:=i;", expected_tokens, expected_ast,
@@ -224,8 +245,10 @@ TEST(ControlTests, RepeatStmt) {
                           {TT::Identifier, "a"},
                           {TT::Equal, "="},
                           {TT::Number, "0"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("repeat a:=a-1 until a=0;", expected_tokens, expected_ast,
@@ -247,8 +270,10 @@ TEST(FunctionTests, Func1) {
                           {TT::Number, "0"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("function f: integer; begin f:=0; end;", expected_tokens,
@@ -261,8 +286,10 @@ TEST(FunctionTests, Func2) {
                           {TT::Semicolon, ";"},
                           {TT::Begin, "begin"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("procedure p; begin end;", expected_tokens, expected_ast,
@@ -287,8 +314,10 @@ TEST(FunctionTests, Func3) {
                           {TT::Identifier, "x"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("function g(x: integer): integer; begin g:=x; end;", expected_tokens,
@@ -309,8 +338,10 @@ TEST(FloatTests, Float1) {
                           {TT::Number, "1"},
                           {TT::Dot, "."},
                           {TT::Number, "0"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var x: real; x:=1.0;", expected_tokens, expected_ast, expected_asm,
@@ -328,8 +359,10 @@ TEST(FloatTests, Float2) {
                           {TT::Number, "2"},
                           {TT::Dot, "."},
                           {TT::Number, "5"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("x:=1.5+2.5;", expected_tokens, expected_ast, expected_asm,
@@ -352,8 +385,10 @@ TEST(FloatTests, Float3) {
                           {TT::Number, "0"},
                           {TT::Dot, "."},
                           {TT::Number, "0"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("if 0.0 < 1.0 then x:=0.0;", expected_tokens, expected_ast,
@@ -376,8 +411,10 @@ TEST(FloatTests, Float4) {
                           {TT::Number, "0"},
                           {TT::Dot, "."},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("while x < 1.0 do x:=x+0.1;", expected_tokens, expected_ast,
@@ -399,8 +436,10 @@ TEST(FloatTests, Float5) {
                           {TT::Number, "0"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("function f: real; begin f:=0.0; end;", expected_tokens,
@@ -414,8 +453,10 @@ TEST(UnsignedTests, Uns1) {
                           {TT::Identifier, "u"},
                           {TT::Colon, ":"},
                           {TT::Identifier, "unsigned"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var u: unsigned;", expected_tokens, expected_ast, expected_asm,
@@ -427,8 +468,10 @@ TEST(UnsignedTests, Uns2) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("u:=1;", expected_tokens, expected_ast, expected_asm,
@@ -447,8 +490,10 @@ TEST(UnsignedTests, Uns3) {
                           {TT::Identifier, "u"},
                           {TT::Minus, "-"},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("while u>0 do u:=u-1;", expected_tokens, expected_ast, expected_asm,
@@ -468,8 +513,10 @@ TEST(UnsignedTests, Uns4) {
                           {TT::Number, "0"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("function f: unsigned; begin f:=0; end;", expected_tokens,
@@ -489,8 +536,10 @@ TEST(UnsignedTests, Uns5) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Identifier, "u"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("for u:=1 to 5 do u:=u;", expected_tokens, expected_ast,
@@ -504,8 +553,10 @@ TEST(LongIntTests, Long1) {
                           {TT::Identifier, "l"},
                           {TT::Colon, ":"},
                           {TT::Identifier, "longint"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var l: longint;", expected_tokens, expected_ast, expected_asm,
@@ -517,8 +568,10 @@ TEST(LongIntTests, Long2) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("l:=1;", expected_tokens, expected_ast, expected_asm,
@@ -537,8 +590,10 @@ TEST(LongIntTests, Long3) {
                           {TT::Identifier, "l"},
                           {TT::Minus, "-"},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("while l>0 do l:=l-1;", expected_tokens, expected_ast, expected_asm,
@@ -558,8 +613,10 @@ TEST(LongIntTests, Long4) {
                           {TT::Number, "0"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("function f: longint; begin f:=0; end;", expected_tokens,
@@ -579,8 +636,10 @@ TEST(LongIntTests, Long5) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Identifier, "l"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("for l:=1 to 5 do l:=l;", expected_tokens, expected_ast,
@@ -594,8 +653,10 @@ TEST(DynamicTests, Dyn1) {
                           {TT::LeftParen, "("},
                           {TT::Identifier, "p"},
                           {TT::RightParen, ")"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("new(p);", expected_tokens, expected_ast, expected_asm,
@@ -607,8 +668,10 @@ TEST(DynamicTests, Dyn2) {
                           {TT::LeftParen, "("},
                           {TT::Identifier, "p"},
                           {TT::RightParen, ")"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("dispose(p);", expected_tokens, expected_ast, expected_asm,
@@ -621,8 +684,10 @@ TEST(DynamicTests, Dyn3) {
                           {TT::Colon, ":"},
                           {TT::Caret, "^"},
                           {TT::Identifier, "integer"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var p:^integer;", expected_tokens, expected_ast, expected_asm,
@@ -635,8 +700,10 @@ TEST(DynamicTests, Dyn4) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("p^:=1;", expected_tokens, expected_ast, expected_asm,
@@ -654,8 +721,10 @@ TEST(DynamicTests, Dyn5) {
                           {TT::LeftParen, "("},
                           {TT::Identifier, "p"},
                           {TT::RightParen, ")"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("if p<>nil then dispose(p);", expected_tokens, expected_ast,
@@ -669,8 +738,10 @@ TEST(StringTests, Str1) {
                           {TT::Identifier, "s"},
                           {TT::Colon, ":"},
                           {TT::Identifier, "string"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var s: string;", expected_tokens, expected_ast, expected_asm,
@@ -684,8 +755,10 @@ TEST(StringTests, Str2) {
                           {TT::Identifier, "'"},
                           {TT::Identifier, "hi"},
                           {TT::Identifier, "'"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("s:='hi';", expected_tokens, expected_ast, expected_asm,
@@ -701,8 +774,10 @@ TEST(StringTests, Str3) {
                           {TT::Identifier, "'"},
                           {TT::Identifier, "!"},
                           {TT::Identifier, "'"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("s:=s+'!';", expected_tokens, expected_ast, expected_asm,
@@ -714,8 +789,10 @@ TEST(StringTests, Str4) {
                           {TT::LeftParen, "("},
                           {TT::Identifier, "s"},
                           {TT::RightParen, ")"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("writeln(s);", expected_tokens, expected_ast, expected_asm,
@@ -735,8 +812,10 @@ TEST(StringTests, Str5) {
                           {TT::Identifier, "'"},
                           {TT::Identifier, "a"},
                           {TT::Identifier, "'"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("if s='' then s:='a';", expected_tokens, expected_ast, expected_asm,
@@ -758,8 +837,10 @@ TEST(ArrayTests, Arr1) {
                           {TT::RightBracket, "]"},
                           {TT::Of, "of"},
                           {TT::Identifier, "integer"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var a: array[1..5] of integer;", expected_tokens, expected_ast,
@@ -774,8 +855,10 @@ TEST(ArrayTests, Arr2) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "0"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("a[1]:=0;", expected_tokens, expected_ast, expected_asm,
@@ -798,8 +881,10 @@ TEST(ArrayTests, Arr3) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Identifier, "i"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("for i:=1 to 5 do a[i]:=i;", expected_tokens, expected_ast,
@@ -814,8 +899,10 @@ TEST(ArrayTests, Arr4) {
                           {TT::Number, "1"},
                           {TT::RightBracket, "]"},
                           {TT::RightParen, ")"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("writeln(a[1]);", expected_tokens, expected_ast, expected_asm,
@@ -838,8 +925,10 @@ TEST(ArrayTests, Arr5) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("if a[1]=0 then a[1]:=1;", expected_tokens, expected_ast,
@@ -858,8 +947,10 @@ TEST(StructTests, Rec1) {
                           {TT::Identifier, "integer"},
                           {TT::Semicolon, ";"},
                           {TT::End, "end"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("type r=record a:integer; end;", expected_tokens, expected_ast,
@@ -871,8 +962,10 @@ TEST(StructTests, Rec2) {
                           {TT::Identifier, "v"},
                           {TT::Colon, ":"},
                           {TT::Identifier, "r"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var v:r;", expected_tokens, expected_ast, expected_asm,
@@ -886,8 +979,10 @@ TEST(StructTests, Rec3) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("v.a:=1;", expected_tokens, expected_ast, expected_asm,
@@ -902,8 +997,10 @@ TEST(StructTests, Rec4) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "2"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("with v do a:=2;", expected_tokens, expected_ast, expected_asm,
@@ -924,8 +1021,10 @@ TEST(StructTests, Rec5) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("if v.a=0 then v.a:=1;", expected_tokens, expected_ast, expected_asm,
@@ -940,8 +1039,10 @@ TEST(PointerTests, Ptr1) {
                           {TT::Colon, ":"},
                           {TT::Caret, "^"},
                           {TT::Identifier, "integer"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("var p:^integer;", expected_tokens, expected_ast, expected_asm,
@@ -953,8 +1054,10 @@ TEST(PointerTests, Ptr2) {
                           {TT::LeftParen, "("},
                           {TT::Identifier, "p"},
                           {TT::RightParen, ")"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("new(p);", expected_tokens, expected_ast, expected_asm,
@@ -967,8 +1070,10 @@ TEST(PointerTests, Ptr3) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Number, "1"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("p^:=1;", expected_tokens, expected_ast, expected_asm,
@@ -980,8 +1085,10 @@ TEST(PointerTests, Ptr4) {
                           {TT::LeftParen, "("},
                           {TT::Identifier, "p"},
                           {TT::RightParen, ")"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("dispose(p);", expected_tokens, expected_ast, expected_asm,
@@ -993,8 +1100,10 @@ TEST(PointerTests, Ptr5) {
                           {TT::Colon, ":"},
                           {TT::Assign, "="},
                           {TT::Identifier, "nil"},
-                          {TT::Semicolon, ";"}});
-  AST expected_ast = make_empty_ast();
+                          {TT::Semicolon, ";"},
+                          {TT::EndOfFile, ""}});
+  AST expected_ast{};
+  expected_ast.valid = true;
   std::string expected_asm = "section .text";
   std::string expected_output = "";
   run_full("p:=nil;", expected_tokens, expected_ast, expected_asm,
