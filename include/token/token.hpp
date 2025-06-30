@@ -19,6 +19,7 @@ enum class TokenType {
   RightParen,
   LeftBracket,
   RightBracket,
+  Caret,
 
   // One or two character tokens
   Assign,

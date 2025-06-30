@@ -20,12 +20,13 @@ private:
   bool match(TokenType type);
   bool isAtEnd() const;
 
-  std::unique_ptr<ASTNode> parseBlock();
-  std::unique_ptr<ASTNode> parseDeclaration();
-  std::unique_ptr<ASTNode> parseStatement();
-  std::unique_ptr<ASTNode> parseExpression();
+  std::unique_ptr<Block> parseBlock();
+  std::unique_ptr<Declaration> parseDeclaration();
+  std::unique_ptr<Statement> parseStatement();
+  std::unique_ptr<Expression> parseExpression();
+  std::unique_ptr<TypeSpec> parseTypeSpec();
 
-  AST parseProgram();
+  std::unique_ptr<Program> parseProgram();
 
   const std::vector<Token> &m_tokens;
   std::size_t m_current{0};
