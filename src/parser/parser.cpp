@@ -4,6 +4,10 @@ namespace pascal {
 
 Parser::Parser(const std::vector<Token> &tokens) : m_tokens(tokens) {}
 
-void Parser::parse() {}
+AST Parser::parse() {
+  AST ast;
+  ast.valid = true;
+  return ast;
+}
 
 } // namespace pascal

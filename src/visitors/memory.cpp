@@ -2,7 +2,7 @@
 
 namespace pascal {
 
-void MemoryManager::allocate() {}
+void MemoryManager::allocate(std::size_t /*bytes*/) {}
 
 void MemoryManager::deallocate() {}
 
