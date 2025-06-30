@@ -29,9 +29,74 @@ structures, and pointers.
   files under `src/` can remain stub implementations.
 - Ensure headers declare all types and functions necessary to support the full
   Pascal grammar described in `README.md`.
+
+## Testing
 - Tests rely on hard‑coded expectations for tokens, AST validity, generated
-  assembly, and execution output. Keep the helper utilities under `tests/`
-  working.
+  assembly, and execution output.
+- For each tests, there must exist a hardcoded: token list, ast, asm & expected output, for example:
+```cpp
+TEST(ExpressionTests, Expr2) {
+
+    auto input_str = "begin b := a + 1; end.";
+
+        // Example ast, incorrect/incomplete, but for demonstration purposes
+  std::vector<Token> expected_tokens_t = std::vector<Token>{
+      {"begin", pascal::TokenType::Begin},
+      {"b", pascal::TokenType::Identifier},
+      {":", pascal::TokenType::Colon},
+      {"=", pascal::TokenType::Assign},
+      {"a", pascal::TokenType::Identifier},
+      {"+", pascal::TokenType::Plus},
+      {"1", pascal::TokenType::Number},
+      {";", pascal::TokenType::Semicolon},
+      {"end", pascal::TokenType::End},
+      {".", pascal::TokenType::Dot} {"begin", pascal::TokenType::Begin},
+      {"b", pascal::TokenType::Identifier},
+      {":", pascal::TokenType::Colon},
+      {"=", pascal::TokenType::Assign},
+      {"a", pascal::TokenType::Identifier},
+      {"+", pascal::TokenType::Plus},
+      {"1", pascal::TokenType::Number},
+      {";", pascal::TokenType::Semicolon},
+      {"end", pascal::TokenType::End},
+      {".", pascal::TokenType::Dot}};
+
+    AST expected_ast = {
+        // Example ast, incorrect/incomplete, but for demonstration purposes
+        std::make_unique<pascal::Program>("test_program",
+                                      std::make_unique<pascal::Block>(
+                                          std::vector<std::unique_ptr<pascal::Declaration>>{},
+                                          std::vector<std::unique_ptr<pascal::Statement>>{
+                                              std::make_unique<pascal::AssignStmt>(
+                                                  "b",
+                                                  std::make_unique<pascal::BinaryExpr>(
+                                                      std::make_unique<pascal::VariableExpr>("a"),
+                                                      "+",
+                                                      std::make_unique<pascal::LiteralExpr>("1")))})};
+
+        // Example ast, incorrect/incomplete, but for demonstration purposes
+    std::string expected_asm = R"(
+        section .text
+        global _start
+        _start:
+            ; begin
+            mov eax, 1          ; Load 1 into eax
+            mov [b], eax        ; Assign to b
+            ; end
+            ret
+        )";
+
+
+    std::string expected_output = ""; // No output since there is no writeln
+
+
+
+    run_full(input_str, expected_tokens_t, expected_ast, expected_asm, expected_output);
+
+}
+```
+- Each one of this hardcoded expected outputs, will be manually created & typed, no automated function for this.
+
 
 ## Code Style
 

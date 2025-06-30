@@ -7,16 +7,16 @@ using pascal::Parser;
 using pascal::Token;
 using test_utils::make_empty_ast;
 using test_utils::run_full;
-using test_utils::tokens;
 using TT = pascal::TokenType;
 
 // Variable declarations
 TEST(VarDeclTests, Decl1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "integer"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -25,11 +25,12 @@ TEST(VarDeclTests, Decl1) {
 }
 
 TEST(VarDeclTests, Decl2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "b"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "real"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "b"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "real"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -38,11 +39,12 @@ TEST(VarDeclTests, Decl2) {
 }
 
 TEST(VarDeclTests, Decl3) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "c"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "unsigned"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "c"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "unsigned"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -52,14 +54,15 @@ TEST(VarDeclTests, Decl3) {
 
 // Expressions
 TEST(ExpressionTests, Expr1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Begin, "begin"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Dot, "."}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Begin, "begin"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Dot, "."}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -68,16 +71,17 @@ TEST(ExpressionTests, Expr1) {
 }
 
 TEST(ExpressionTests, Expr2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Begin, "begin"},
-                                               {TT::Identifier, "b"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "a"},
-                                               {TT::Plus, "+"},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Dot, "."}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Begin, "begin"},
+                          {TT::Identifier, "b"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "a"},
+                          {TT::Plus, "+"},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Dot, "."}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -86,16 +90,17 @@ TEST(ExpressionTests, Expr2) {
 }
 
 TEST(ExpressionTests, Expr3) {
-  std::vector<Token> expected_tokens = tokens({{TT::Begin, "begin"},
-                                               {TT::Identifier, "c"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "b"},
-                                               {TT::Star, "*"},
-                                               {TT::Number, "2"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Dot, "."}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Begin, "begin"},
+                          {TT::Identifier, "c"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "b"},
+                          {TT::Star, "*"},
+                          {TT::Number, "2"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Dot, "."}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -105,16 +110,17 @@ TEST(ExpressionTests, Expr3) {
 
 // Control statements
 TEST(ControlTests, IfStmt) {
-  std::vector<Token> expected_tokens = tokens({{TT::If, "if"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Greater, ">"},
-                                               {TT::Number, "0"},
-                                               {TT::Then, "then"},
-                                               {TT::Identifier, "b"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::If, "if"},
+                          {TT::Identifier, "a"},
+                          {TT::Greater, ">"},
+                          {TT::Number, "0"},
+                          {TT::Then, "then"},
+                          {TT::Identifier, "b"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -122,21 +128,22 @@ TEST(ControlTests, IfStmt) {
            expected_output);
 }
 TEST(ControlTests, IfElse) {
-  std::vector<Token> expected_tokens = tokens({{TT::If, "if"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Greater, ">"},
-                                               {TT::Number, "0"},
-                                               {TT::Then, "then"},
-                                               {TT::Identifier, "b"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Else, "else"},
-                                               {TT::Identifier, "b"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "2"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::If, "if"},
+                          {TT::Identifier, "a"},
+                          {TT::Greater, ">"},
+                          {TT::Number, "0"},
+                          {TT::Then, "then"},
+                          {TT::Identifier, "b"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Else, "else"},
+                          {TT::Identifier, "b"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "2"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -144,18 +151,19 @@ TEST(ControlTests, IfElse) {
            expected_asm, expected_output);
 }
 TEST(ControlTests, CaseStmt) {
-  std::vector<Token> expected_tokens = tokens({{TT::Case, "case"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Of, "of"},
-                                               {TT::Number, "1"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "b"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Case, "case"},
+                          {TT::Identifier, "a"},
+                          {TT::Of, "of"},
+                          {TT::Number, "1"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "b"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -163,18 +171,19 @@ TEST(ControlTests, CaseStmt) {
            expected_asm, expected_output);
 }
 TEST(ControlTests, WhileStmt) {
-  std::vector<Token> expected_tokens = tokens({{TT::While, "while"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Greater, ">"},
-                                               {TT::Number, "0"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "a"},
-                                               {TT::Minus, "-"},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::While, "while"},
+                          {TT::Identifier, "a"},
+                          {TT::Greater, ">"},
+                          {TT::Number, "0"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "a"},
+                          {TT::Minus, "-"},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -182,19 +191,20 @@ TEST(ControlTests, WhileStmt) {
            expected_asm, expected_output);
 }
 TEST(ControlTests, ForStmt) {
-  std::vector<Token> expected_tokens = tokens({{TT::For, "for"},
-                                               {TT::Identifier, "i"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::To, "to"},
-                                               {TT::Number, "10"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "i"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::For, "for"},
+                          {TT::Identifier, "i"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::To, "to"},
+                          {TT::Number, "10"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "i"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -202,18 +212,19 @@ TEST(ControlTests, ForStmt) {
            expected_asm, expected_output);
 }
 TEST(ControlTests, RepeatStmt) {
-  std::vector<Token> expected_tokens = tokens({{TT::Repeat, "repeat"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "a"},
-                                               {TT::Minus, "-"},
-                                               {TT::Number, "1"},
-                                               {TT::Until, "until"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Equal, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Repeat, "repeat"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "a"},
+                          {TT::Minus, "-"},
+                          {TT::Number, "1"},
+                          {TT::Until, "until"},
+                          {TT::Identifier, "a"},
+                          {TT::Equal, "="},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -223,19 +234,20 @@ TEST(ControlTests, RepeatStmt) {
 
 // Functions
 TEST(FunctionTests, Func1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Function, "function"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::Begin, "begin"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Function, "function"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "integer"},
+                          {TT::Semicolon, ";"},
+                          {TT::Begin, "begin"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -243,12 +255,13 @@ TEST(FunctionTests, Func1) {
            expected_ast, expected_asm, expected_output);
 }
 TEST(FunctionTests, Func2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Procedure, "procedure"},
-                                               {TT::Identifier, "p"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::Begin, "begin"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Procedure, "procedure"},
+                          {TT::Identifier, "p"},
+                          {TT::Semicolon, ";"},
+                          {TT::Begin, "begin"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -256,24 +269,25 @@ TEST(FunctionTests, Func2) {
            expected_asm, expected_output);
 }
 TEST(FunctionTests, Func3) {
-  std::vector<Token> expected_tokens = tokens({{TT::Function, "function"},
-                                               {TT::Identifier, "g"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "x"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::Begin, "begin"},
-                                               {TT::Identifier, "g"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "x"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Function, "function"},
+                          {TT::Identifier, "g"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "x"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "integer"},
+                          {TT::RightParen, ")"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "integer"},
+                          {TT::Semicolon, ";"},
+                          {TT::Begin, "begin"},
+                          {TT::Identifier, "g"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "x"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -283,18 +297,19 @@ TEST(FunctionTests, Func3) {
 
 // Float
 TEST(FloatTests, Float1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "x"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "real"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::Identifier, "x"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "x"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "real"},
+                          {TT::Semicolon, ";"},
+                          {TT::Identifier, "x"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Dot, "."},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -302,17 +317,18 @@ TEST(FloatTests, Float1) {
            expected_output);
 }
 TEST(FloatTests, Float2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "x"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "5"},
-                                               {TT::Plus, "+"},
-                                               {TT::Number, "2"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "5"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "x"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Dot, "."},
+                          {TT::Number, "5"},
+                          {TT::Plus, "+"},
+                          {TT::Number, "2"},
+                          {TT::Dot, "."},
+                          {TT::Number, "5"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -320,22 +336,23 @@ TEST(FloatTests, Float2) {
            expected_output);
 }
 TEST(FloatTests, Float3) {
-  std::vector<Token> expected_tokens = tokens({{TT::If, "if"},
-                                               {TT::Number, "0"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "0"},
-                                               {TT::Less, "<"},
-                                               {TT::Number, "1"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "0"},
-                                               {TT::Then, "then"},
-                                               {TT::Identifier, "x"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::If, "if"},
+                          {TT::Number, "0"},
+                          {TT::Dot, "."},
+                          {TT::Number, "0"},
+                          {TT::Less, "<"},
+                          {TT::Number, "1"},
+                          {TT::Dot, "."},
+                          {TT::Number, "0"},
+                          {TT::Then, "then"},
+                          {TT::Identifier, "x"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "0"},
+                          {TT::Dot, "."},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -343,22 +360,23 @@ TEST(FloatTests, Float3) {
            expected_asm, expected_output);
 }
 TEST(FloatTests, Float4) {
-  std::vector<Token> expected_tokens = tokens({{TT::While, "while"},
-                                               {TT::Identifier, "x"},
-                                               {TT::Less, "<"},
-                                               {TT::Number, "1"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "0"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "x"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "x"},
-                                               {TT::Plus, "+"},
-                                               {TT::Number, "0"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::While, "while"},
+                          {TT::Identifier, "x"},
+                          {TT::Less, "<"},
+                          {TT::Number, "1"},
+                          {TT::Dot, "."},
+                          {TT::Number, "0"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "x"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "x"},
+                          {TT::Plus, "+"},
+                          {TT::Number, "0"},
+                          {TT::Dot, "."},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -366,21 +384,22 @@ TEST(FloatTests, Float4) {
            expected_asm, expected_output);
 }
 TEST(FloatTests, Float5) {
-  std::vector<Token> expected_tokens = tokens({{TT::Function, "function"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "real"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::Begin, "begin"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Function, "function"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "real"},
+                          {TT::Semicolon, ";"},
+                          {TT::Begin, "begin"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "0"},
+                          {TT::Dot, "."},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -390,11 +409,12 @@ TEST(FloatTests, Float5) {
 
 // Unsigned int
 TEST(UnsignedTests, Uns1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "u"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "unsigned"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "u"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "unsigned"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -402,11 +422,12 @@ TEST(UnsignedTests, Uns1) {
            expected_output);
 }
 TEST(UnsignedTests, Uns2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "u"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "u"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -414,18 +435,19 @@ TEST(UnsignedTests, Uns2) {
            expected_output);
 }
 TEST(UnsignedTests, Uns3) {
-  std::vector<Token> expected_tokens = tokens({{TT::While, "while"},
-                                               {TT::Identifier, "u"},
-                                               {TT::Greater, ">"},
-                                               {TT::Number, "0"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "u"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "u"},
-                                               {TT::Minus, "-"},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::While, "while"},
+                          {TT::Identifier, "u"},
+                          {TT::Greater, ">"},
+                          {TT::Number, "0"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "u"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "u"},
+                          {TT::Minus, "-"},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -433,19 +455,20 @@ TEST(UnsignedTests, Uns3) {
            expected_output);
 }
 TEST(UnsignedTests, Uns4) {
-  std::vector<Token> expected_tokens = tokens({{TT::Function, "function"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "unsigned"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::Begin, "begin"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Function, "function"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "unsigned"},
+                          {TT::Semicolon, ";"},
+                          {TT::Begin, "begin"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -453,19 +476,20 @@ TEST(UnsignedTests, Uns4) {
            expected_ast, expected_asm, expected_output);
 }
 TEST(UnsignedTests, Uns5) {
-  std::vector<Token> expected_tokens = tokens({{TT::For, "for"},
-                                               {TT::Identifier, "u"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::To, "to"},
-                                               {TT::Number, "5"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "u"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "u"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::For, "for"},
+                          {TT::Identifier, "u"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::To, "to"},
+                          {TT::Number, "5"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "u"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "u"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -475,11 +499,12 @@ TEST(UnsignedTests, Uns5) {
 
 // Long int
 TEST(LongIntTests, Long1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "l"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "longint"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "l"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "longint"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -487,11 +512,12 @@ TEST(LongIntTests, Long1) {
            expected_output);
 }
 TEST(LongIntTests, Long2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "l"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "l"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -499,18 +525,19 @@ TEST(LongIntTests, Long2) {
            expected_output);
 }
 TEST(LongIntTests, Long3) {
-  std::vector<Token> expected_tokens = tokens({{TT::While, "while"},
-                                               {TT::Identifier, "l"},
-                                               {TT::Greater, ">"},
-                                               {TT::Number, "0"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "l"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "l"},
-                                               {TT::Minus, "-"},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::While, "while"},
+                          {TT::Identifier, "l"},
+                          {TT::Greater, ">"},
+                          {TT::Number, "0"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "l"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "l"},
+                          {TT::Minus, "-"},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -518,19 +545,20 @@ TEST(LongIntTests, Long3) {
            expected_output);
 }
 TEST(LongIntTests, Long4) {
-  std::vector<Token> expected_tokens = tokens({{TT::Function, "function"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "longint"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::Begin, "begin"},
-                                               {TT::Identifier, "f"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Function, "function"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "longint"},
+                          {TT::Semicolon, ";"},
+                          {TT::Begin, "begin"},
+                          {TT::Identifier, "f"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -538,19 +566,20 @@ TEST(LongIntTests, Long4) {
            expected_ast, expected_asm, expected_output);
 }
 TEST(LongIntTests, Long5) {
-  std::vector<Token> expected_tokens = tokens({{TT::For, "for"},
-                                               {TT::Identifier, "l"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::To, "to"},
-                                               {TT::Number, "5"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "l"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "l"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::For, "for"},
+                          {TT::Identifier, "l"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::To, "to"},
+                          {TT::Number, "5"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "l"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "l"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -560,11 +589,12 @@ TEST(LongIntTests, Long5) {
 
 // Dynamic memory
 TEST(DynamicTests, Dyn1) {
-  std::vector<Token> expected_tokens = tokens({{TT::New, "new"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "p"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::New, "new"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "p"},
+                          {TT::RightParen, ")"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -572,11 +602,12 @@ TEST(DynamicTests, Dyn1) {
            expected_output);
 }
 TEST(DynamicTests, Dyn2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Dispose, "dispose"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "p"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Dispose, "dispose"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "p"},
+                          {TT::RightParen, ")"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -584,12 +615,13 @@ TEST(DynamicTests, Dyn2) {
            expected_output);
 }
 TEST(DynamicTests, Dyn3) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "p"},
-                                               {TT::Colon, ":"},
-                                               {TT::Caret, "^"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "p"},
+                          {TT::Colon, ":"},
+                          {TT::Caret, "^"},
+                          {TT::Identifier, "integer"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -597,12 +629,13 @@ TEST(DynamicTests, Dyn3) {
            expected_output);
 }
 TEST(DynamicTests, Dyn4) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "p"},
-                                               {TT::Caret, "^"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "p"},
+                          {TT::Caret, "^"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -610,17 +643,18 @@ TEST(DynamicTests, Dyn4) {
            expected_output);
 }
 TEST(DynamicTests, Dyn5) {
-  std::vector<Token> expected_tokens = tokens({{TT::If, "if"},
-                                               {TT::Identifier, "p"},
-                                               {TT::Less, "<"},
-                                               {TT::Greater, ">"},
-                                               {TT::Identifier, "nil"},
-                                               {TT::Then, "then"},
-                                               {TT::Dispose, "dispose"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "p"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::If, "if"},
+                          {TT::Identifier, "p"},
+                          {TT::Less, "<"},
+                          {TT::Greater, ">"},
+                          {TT::Identifier, "nil"},
+                          {TT::Then, "then"},
+                          {TT::Dispose, "dispose"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "p"},
+                          {TT::RightParen, ")"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -630,11 +664,12 @@ TEST(DynamicTests, Dyn5) {
 
 // Strings
 TEST(StringTests, Str1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "s"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "string"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "s"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "string"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -642,13 +677,14 @@ TEST(StringTests, Str1) {
            expected_output);
 }
 TEST(StringTests, Str2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "s"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "'"},
-                                               {TT::Identifier, "hi"},
-                                               {TT::Identifier, "'"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "s"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "'"},
+                          {TT::Identifier, "hi"},
+                          {TT::Identifier, "'"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -656,15 +692,16 @@ TEST(StringTests, Str2) {
            expected_output);
 }
 TEST(StringTests, Str3) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "s"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "s"},
-                                               {TT::Plus, "+"},
-                                               {TT::Identifier, "'"},
-                                               {TT::Identifier, "!"},
-                                               {TT::Identifier, "'"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "s"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "s"},
+                          {TT::Plus, "+"},
+                          {TT::Identifier, "'"},
+                          {TT::Identifier, "!"},
+                          {TT::Identifier, "'"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -672,11 +709,12 @@ TEST(StringTests, Str3) {
            expected_output);
 }
 TEST(StringTests, Str4) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "writeln"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "s"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "writeln"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "s"},
+                          {TT::RightParen, ")"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -684,19 +722,20 @@ TEST(StringTests, Str4) {
            expected_output);
 }
 TEST(StringTests, Str5) {
-  std::vector<Token> expected_tokens = tokens({{TT::If, "if"},
-                                               {TT::Identifier, "s"},
-                                               {TT::Equal, "="},
-                                               {TT::Identifier, "'"},
-                                               {TT::Identifier, "'"},
-                                               {TT::Then, "then"},
-                                               {TT::Identifier, "s"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "'"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Identifier, "'"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::If, "if"},
+                          {TT::Identifier, "s"},
+                          {TT::Equal, "="},
+                          {TT::Identifier, "'"},
+                          {TT::Identifier, "'"},
+                          {TT::Then, "then"},
+                          {TT::Identifier, "s"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "'"},
+                          {TT::Identifier, "a"},
+                          {TT::Identifier, "'"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -706,19 +745,20 @@ TEST(StringTests, Str5) {
 
 // Arrays
 TEST(ArrayTests, Arr1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Array, "array"},
-                                               {TT::LeftBracket, "["},
-                                               {TT::Number, "1"},
-                                               {TT::Dot, "."},
-                                               {TT::Dot, "."},
-                                               {TT::Number, "5"},
-                                               {TT::RightBracket, "]"},
-                                               {TT::Of, "of"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Array, "array"},
+                          {TT::LeftBracket, "["},
+                          {TT::Number, "1"},
+                          {TT::Dot, "."},
+                          {TT::Dot, "."},
+                          {TT::Number, "5"},
+                          {TT::RightBracket, "]"},
+                          {TT::Of, "of"},
+                          {TT::Identifier, "integer"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -726,14 +766,15 @@ TEST(ArrayTests, Arr1) {
            expected_asm, expected_output);
 }
 TEST(ArrayTests, Arr2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "a"},
-                                               {TT::LeftBracket, "["},
-                                               {TT::Number, "1"},
-                                               {TT::RightBracket, "]"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "a"},
+                          {TT::LeftBracket, "["},
+                          {TT::Number, "1"},
+                          {TT::RightBracket, "]"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "0"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -741,22 +782,23 @@ TEST(ArrayTests, Arr2) {
            expected_output);
 }
 TEST(ArrayTests, Arr3) {
-  std::vector<Token> expected_tokens = tokens({{TT::For, "for"},
-                                               {TT::Identifier, "i"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::To, "to"},
-                                               {TT::Number, "5"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "a"},
-                                               {TT::LeftBracket, "["},
-                                               {TT::Identifier, "i"},
-                                               {TT::RightBracket, "]"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "i"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::For, "for"},
+                          {TT::Identifier, "i"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::To, "to"},
+                          {TT::Number, "5"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "a"},
+                          {TT::LeftBracket, "["},
+                          {TT::Identifier, "i"},
+                          {TT::RightBracket, "]"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "i"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -764,14 +806,15 @@ TEST(ArrayTests, Arr3) {
            expected_asm, expected_output);
 }
 TEST(ArrayTests, Arr4) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "writeln"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "a"},
-                                               {TT::LeftBracket, "["},
-                                               {TT::Number, "1"},
-                                               {TT::RightBracket, "]"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "writeln"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "a"},
+                          {TT::LeftBracket, "["},
+                          {TT::Number, "1"},
+                          {TT::RightBracket, "]"},
+                          {TT::RightParen, ")"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -779,22 +822,23 @@ TEST(ArrayTests, Arr4) {
            expected_output);
 }
 TEST(ArrayTests, Arr5) {
-  std::vector<Token> expected_tokens = tokens({{TT::If, "if"},
-                                               {TT::Identifier, "a"},
-                                               {TT::LeftBracket, "["},
-                                               {TT::Number, "1"},
-                                               {TT::RightBracket, "]"},
-                                               {TT::Equal, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Then, "then"},
-                                               {TT::Identifier, "a"},
-                                               {TT::LeftBracket, "["},
-                                               {TT::Number, "1"},
-                                               {TT::RightBracket, "]"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::If, "if"},
+                          {TT::Identifier, "a"},
+                          {TT::LeftBracket, "["},
+                          {TT::Number, "1"},
+                          {TT::RightBracket, "]"},
+                          {TT::Equal, "="},
+                          {TT::Number, "0"},
+                          {TT::Then, "then"},
+                          {TT::Identifier, "a"},
+                          {TT::LeftBracket, "["},
+                          {TT::Number, "1"},
+                          {TT::RightBracket, "]"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -804,16 +848,17 @@ TEST(ArrayTests, Arr5) {
 
 // Struct (record)
 TEST(StructTests, Rec1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Type, "type"},
-                                               {TT::Identifier, "r"},
-                                               {TT::Equal, "="},
-                                               {TT::Record, "record"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::Semicolon, ";"},
-                                               {TT::End, "end"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Type, "type"},
+                          {TT::Identifier, "r"},
+                          {TT::Equal, "="},
+                          {TT::Record, "record"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "integer"},
+                          {TT::Semicolon, ";"},
+                          {TT::End, "end"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -821,11 +866,12 @@ TEST(StructTests, Rec1) {
            expected_asm, expected_output);
 }
 TEST(StructTests, Rec2) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "v"},
-                                               {TT::Colon, ":"},
-                                               {TT::Identifier, "r"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "v"},
+                          {TT::Colon, ":"},
+                          {TT::Identifier, "r"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -833,13 +879,14 @@ TEST(StructTests, Rec2) {
            expected_output);
 }
 TEST(StructTests, Rec3) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "v"},
-                                               {TT::Dot, "."},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "v"},
+                          {TT::Dot, "."},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -847,14 +894,15 @@ TEST(StructTests, Rec3) {
            expected_output);
 }
 TEST(StructTests, Rec4) {
-  std::vector<Token> expected_tokens = tokens({{TT::With, "with"},
-                                               {TT::Identifier, "v"},
-                                               {TT::Do, "do"},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "2"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::With, "with"},
+                          {TT::Identifier, "v"},
+                          {TT::Do, "do"},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "2"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -862,20 +910,21 @@ TEST(StructTests, Rec4) {
            expected_output);
 }
 TEST(StructTests, Rec5) {
-  std::vector<Token> expected_tokens = tokens({{TT::If, "if"},
-                                               {TT::Identifier, "v"},
-                                               {TT::Dot, "."},
-                                               {TT::Identifier, "a"},
-                                               {TT::Equal, "="},
-                                               {TT::Number, "0"},
-                                               {TT::Then, "then"},
-                                               {TT::Identifier, "v"},
-                                               {TT::Dot, "."},
-                                               {TT::Identifier, "a"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::If, "if"},
+                          {TT::Identifier, "v"},
+                          {TT::Dot, "."},
+                          {TT::Identifier, "a"},
+                          {TT::Equal, "="},
+                          {TT::Number, "0"},
+                          {TT::Then, "then"},
+                          {TT::Identifier, "v"},
+                          {TT::Dot, "."},
+                          {TT::Identifier, "a"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -885,12 +934,13 @@ TEST(StructTests, Rec5) {
 
 // Pointers
 TEST(PointerTests, Ptr1) {
-  std::vector<Token> expected_tokens = tokens({{TT::Var, "var"},
-                                               {TT::Identifier, "p"},
-                                               {TT::Colon, ":"},
-                                               {TT::Caret, "^"},
-                                               {TT::Identifier, "integer"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Var, "var"},
+                          {TT::Identifier, "p"},
+                          {TT::Colon, ":"},
+                          {TT::Caret, "^"},
+                          {TT::Identifier, "integer"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -898,11 +948,12 @@ TEST(PointerTests, Ptr1) {
            expected_output);
 }
 TEST(PointerTests, Ptr2) {
-  std::vector<Token> expected_tokens = tokens({{TT::New, "new"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "p"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::New, "new"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "p"},
+                          {TT::RightParen, ")"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -910,12 +961,13 @@ TEST(PointerTests, Ptr2) {
            expected_output);
 }
 TEST(PointerTests, Ptr3) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "p"},
-                                               {TT::Caret, "^"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Number, "1"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "p"},
+                          {TT::Caret, "^"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Number, "1"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -923,11 +975,12 @@ TEST(PointerTests, Ptr3) {
            expected_output);
 }
 TEST(PointerTests, Ptr4) {
-  std::vector<Token> expected_tokens = tokens({{TT::Dispose, "dispose"},
-                                               {TT::LeftParen, "("},
-                                               {TT::Identifier, "p"},
-                                               {TT::RightParen, ")"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Dispose, "dispose"},
+                          {TT::LeftParen, "("},
+                          {TT::Identifier, "p"},
+                          {TT::RightParen, ")"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
@@ -935,11 +988,12 @@ TEST(PointerTests, Ptr4) {
            expected_output);
 }
 TEST(PointerTests, Ptr5) {
-  std::vector<Token> expected_tokens = tokens({{TT::Identifier, "p"},
-                                               {TT::Colon, ":"},
-                                               {TT::Assign, "="},
-                                               {TT::Identifier, "nil"},
-                                               {TT::Semicolon, ";"}});
+  std::vector<Token> expected_tokens =
+      std::vector<Token>({{TT::Identifier, "p"},
+                          {TT::Colon, ":"},
+                          {TT::Assign, "="},
+                          {TT::Identifier, "nil"},
+                          {TT::Semicolon, ";"}});
   AST expected_ast = make_empty_ast();
   std::string expected_asm = "section .text";
   std::string expected_output = "";
