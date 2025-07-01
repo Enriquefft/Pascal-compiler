@@ -138,7 +138,8 @@ run_validation_fail(std::string_view src,
                     const std::vector<Token> &expected_tokens,
                     const pascal::AST &expected_ast,
                     [[maybe_unused]] std::string_view expected_asm,
-                    [[maybe_unused]] std::string_view expected_output) {
+                    [[maybe_unused]] std::string_view expected_output,
+                    std::string_view expected_error = "") {
   Lexer lex(src);
   auto tokens = lex.scanTokens();
   ASSERT_EQ(tokens.size(), expected_tokens.size());
@@ -156,6 +157,9 @@ run_validation_fail(std::string_view src,
   ASTValidator validator;
   auto res = validator.validate(ast);
   EXPECT_FALSE(res.success);
+  if (!expected_error.empty()) {
+    EXPECT_EQ(res.message, expected_error);
+  }
 }
 
 } // namespace test_utils
