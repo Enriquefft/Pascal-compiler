@@ -15,6 +15,7 @@ FunctionDecl::~FunctionDecl() = default;
 CaseStmt::~CaseStmt() = default;
 ArrayTypeSpec::~ArrayTypeSpec() = default;
 PointerTypeSpec::~PointerTypeSpec() = default;
+IdentifierList ::~IdentifierList() = default;
 
 Expression::~Expression() = default;
 Statement::~Statement() = default;

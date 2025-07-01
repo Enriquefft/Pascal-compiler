@@ -1,5 +1,6 @@
 #include "visitors/codegen.hpp"
 #include "parser/ast.hpp"
+#include "utils.hpp"
 #include <cstring>
 #include <iomanip>
 #include <sstream>
@@ -17,8 +18,8 @@ std::string floatToHex(double d) {
   uint64_t bits;
   std::memcpy(&bits, &d, sizeof(double));
   std::ostringstream oss;
-  oss << "0x" << std::hex << std::uppercase << std::setw(16) << std::setfill('0')
-      << bits;
+  oss << "0x" << std::hex << std::uppercase << std::setw(16)
+      << std::setfill('0') << bits;
   return oss.str();
 }
 
@@ -272,14 +273,16 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
         var->name == m_currentFunction) {
       emit("    mov    rax, " + val + "\n");
     } else if (!var->selectors.empty() &&
-               var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
+               var->selectors[0].kind ==
+                   VariableExpr::Selector::Kind::Pointer) {
       emit("    mov    rax, [" + var->name + "]\n");
       emit("    mov    qword [rax], " + val + "\n");
     } else if (!var->selectors.empty() &&
                var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
       const auto &sel = var->selectors[0];
-      if (const auto *lit = dynamic_cast<const LiteralExpr *>(sel.index.get())) {
-        long idx = std::stol(lit->value);
+      if (const auto *indexLit =
+              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
+        long idx = std::stol(indexLit->value);
         long off = (idx - 1) * 8;
         emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
              "], " + val + "\n");
@@ -341,13 +344,15 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
         var->name == m_currentFunction) {
       // result already in rax
     } else if (!var->selectors.empty() &&
-               var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
+               var->selectors[0].kind ==
+                   VariableExpr::Selector::Kind::Pointer) {
       emit("    mov    rbx, [" + var->name + "]\n");
       emit("    mov    [rbx], rax\n");
     } else if (!var->selectors.empty() &&
                var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
       const auto &sel = var->selectors[0];
-      if (const auto *lit = dynamic_cast<const LiteralExpr *>(sel.index.get())) {
+      if (const auto *lit =
+              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
         long idx = std::stol(lit->value);
         long off = (idx - 1) * 8;
         emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
@@ -373,13 +378,15 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
         var->name == m_currentFunction) {
       // result already in rax
     } else if (!var->selectors.empty() &&
-               var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
+               var->selectors[0].kind ==
+                   VariableExpr::Selector::Kind::Pointer) {
       emit("    mov    rbx, [" + var->name + "]\n");
       emit("    mov    [rbx], rax\n");
     } else if (!var->selectors.empty() &&
                var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
       const auto &sel = var->selectors[0];
-      if (const auto *lit = dynamic_cast<const LiteralExpr *>(sel.index.get())) {
+      if (const auto *lit =
+              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
         long idx = std::stol(lit->value);
         long off = (idx - 1) * 8;
         emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
@@ -417,10 +424,12 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
       emit("    call   free\n");
     }
   } else if (node.name == "writeln" && !node.args.empty()) {
-    if (const auto *lit = dynamic_cast<const LiteralExpr *>(node.args[0].get())) {
+    if (const auto *lit =
+            dynamic_cast<const LiteralExpr *>(node.args[0].get())) {
       if (!lit->value.empty() && lit->value.front() == '\'' &&
           lit->value.back() == '\'') {
-        std::string lbl = addString(lit->value.substr(1, lit->value.size() - 2));
+        std::string lbl =
+            addString(lit->value.substr(1, lit->value.size() - 2));
         emit("    mov    rdi, " + lbl + "\n");
       } else {
         emit("    mov    rdi, fmt_int\n");
@@ -429,8 +438,8 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
         emit("    call   printf\n");
         return;
       }
-    } else if (const auto *be = dynamic_cast<const BinaryExpr *>(
-                   node.args[0].get())) {
+    } else if (const auto *be =
+                   dynamic_cast<const BinaryExpr *>(node.args[0].get())) {
       emit("    mov    rdi, fmt_int\n");
       if (be->left->kind == NodeKind::LiteralExpr) {
         const auto *ll = static_cast<const LiteralExpr *>(be->left.get());
@@ -440,8 +449,10 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
         emit("    mov    rsi, rax\n");
       }
       if (be->right->kind == NodeKind::LiteralExpr && be->op == "+") {
-        const auto *lit = static_cast<const LiteralExpr *>(be->right.get());
-        emit("    add    rsi, " + lit->value + "\n");
+
+        const auto *beLit = static_cast<const LiteralExpr *>(be->right.get());
+
+        emit("    add    rsi, " + beLit->value + "\n");
       }
       emit("    xor    rax, rax\n");
       emit("    call   printf\n");
@@ -451,6 +462,15 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
       emit("    mov    rdi, [" + var->name + "]\n");
       emit("    call   puts\n");
       return;
+    }
+  }
+}
+
+void CodeGenerator::visitIdentifierList(const IdentifierList &node) {
+  for (const auto &name : node) {
+    if (!name.empty()) {
+      addVar(name);
+      m_params.insert(name);
     }
   }
 }
@@ -473,9 +493,9 @@ void CodeGenerator::visitIfStmt(const IfStmt &node) {
       else if (be->op == ">=")
         cond = lhs >= rhs;
       else if (be->op == "=")
-        cond = lhs == rhs;
+        cond = my_utils::float_equal(lhs, rhs);
       else if (be->op == "<>")
-        cond = lhs != rhs;
+        cond = !my_utils::float_equal(lhs, rhs);
       if (cond) {
         if (node.thenBranch)
           node.thenBranch->accept(*this);

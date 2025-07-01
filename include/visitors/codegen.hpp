@@ -26,6 +26,7 @@ public:
   void visitAssignStmt(const AssignStmt &node) override;
   void visitProcCall(const ProcCall &node) override;
   void visitIfStmt(const IfStmt &node) override;
+  void visitIdentifierList(const IdentifierList &node) override;
   void visitWhileStmt(const WhileStmt &node) override;
   void visitForStmt(const ForStmt &node) override;
   void visitRepeatStmt(const RepeatStmt &node) override;

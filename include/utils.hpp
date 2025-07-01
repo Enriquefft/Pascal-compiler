@@ -2,6 +2,8 @@
 #define INCLUDE_UTILS_HPP_
 
 #include <cstdint>
+#include <cstdlib>
+#include <limits>
 #include <utility> // std::pair
 #include <vector>
 
@@ -36,7 +38,14 @@ template <arithmetic_t T> auto random_num_v(const T &min, const T &max) -> T;
 
 template <arithmetic_t T>
 inline auto random_num_v(const range_t<T> &range) -> T {
-  return RandomNum_v(range.first, range.second);
+  return random_num_v(range.first, range.second);
+}
+
+template <std::floating_point T>
+inline auto float_equal(const T &a, const T &b,
+                        const T &epsilon = std::numeric_limits<T>::epsilon())
+    -> bool {
+  return std::abs(a - b) <= epsilon;
 }
 
 // class explicit instantiation

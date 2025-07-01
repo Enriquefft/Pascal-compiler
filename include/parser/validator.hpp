@@ -32,6 +32,7 @@ public:
   void visitForStmt(const ForStmt &node) override;
   void visitRepeatStmt(const RepeatStmt &node) override;
   void visitCaseStmt(const CaseStmt &node) override;
+  void visitIdentifierList(const IdentifierList &node) override;
   void visitWithStmt(const WithStmt &node) override;
   void visitBinaryExpr(const BinaryExpr &node) override;
   void visitUnaryExpr(const UnaryExpr &node) override;

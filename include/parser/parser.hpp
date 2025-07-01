@@ -26,8 +26,11 @@ private:
   std::unique_ptr<Expression> parseExpression();
   std::unique_ptr<TypeSpec> parseTypeSpec();
   std::unique_ptr<VariableExpr> parseVariable(std::string name);
+  IdentifierList parseIdentifierList();
 
   std::unique_ptr<Program> parseProgram();
+
+  std::string parseIdentifier();
 
   const std::vector<Token> &m_tokens;
   std::size_t m_current{0};

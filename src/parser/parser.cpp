@@ -24,13 +24,69 @@ bool Parser::match(TokenType type) {
 bool Parser::isAtEnd() const { return peek().type == TokenType::EndOfFile; }
 
 std::unique_ptr<Program> Parser::parseProgram() {
+
+  if (!match(TokenType::Program)) {
+    return nullptr; // No program declaration found
+  }
+
+  std::string program_name = parseIdentifier();
+
+  IdentifierList id_list;
+
+  // possible identifier list
+  if (match(TokenType::LeftParen)) {
+    id_list = parseIdentifierList();
+
+    if (!match(TokenType::RightParen)) {
+      throw std::runtime_error(
+          "Expected right parenthesis after identifier list");
+    }
+  }
+  if (!match(TokenType::Semicolon)) {
+    throw std::runtime_error("Expected semicolon after program name");
+  }
+
   auto block = parseBlock();
-  auto prog = std::make_unique<Program>("test", std::move(block));
+
+  if (!match(TokenType::Dot)) {
+    throw std::runtime_error("Expected dot at the end of program");
+  }
+
+  auto prog = std::make_unique<Program>(program_name, std::move(block));
   if (!m_tokens.empty()) {
     prog->line = m_tokens.front().line;
     prog->column = m_tokens.front().column;
   }
   return prog;
+}
+
+IdentifierList Parser::parseIdentifierList() {
+  std::vector<std::string> ids;
+  if (peek().type == TokenType::Identifier) {
+    ids.push_back(parseIdentifier());
+  }
+  while (match(TokenType::Comma)) {
+    if (peek().type == TokenType::Identifier) {
+      ids.push_back(parseIdentifier());
+    } else {
+      throw std::runtime_error("Expected identifier after comma");
+    }
+  }
+  return IdentifierList(std::move(ids));
+}
+
+std::string Parser::parseIdentifier() {
+  // TODO: Handle empty identifiers
+  // TODO: Handle identifiers with special characters
+  // TODO: Handle reserved keywords as identifiers
+  if (peek().type == TokenType::Identifier) {
+    std::string id = advance().lexeme;
+    if (id.empty()) {
+      throw std::runtime_error("Expected identifier, found empty string");
+    }
+    return id;
+  }
+  throw std::runtime_error("Expected identifier, found " + peek().lexeme);
 }
 
 AST Parser::parse() {
@@ -64,8 +120,8 @@ std::unique_ptr<Block> Parser::parseBlock() {
       stmts.push_back(std::move(stmt));
   }
 
-  if (match(TokenType::End)) {
-    match(TokenType::Dot);
+  if (!match(TokenType::End)) {
+    throw std::runtime_error("Expected 'end' or '.' at the end of block");
   }
 
   auto blk = std::make_unique<Block>(std::move(decls), std::move(stmts));
@@ -128,8 +184,8 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
     match(TokenType::Semicolon);
     auto body = parseBlock();
     match(TokenType::Semicolon);
-    auto node = std::make_unique<FunctionDecl>(std::move(name), std::move(params),
-                                              std::move(ret), std::move(body));
+    auto node = std::make_unique<FunctionDecl>(
+        std::move(name), std::move(params), std::move(ret), std::move(body));
     node->line = startTok.line;
     node->column = startTok.column;
     return node;
@@ -157,8 +213,8 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
     match(TokenType::Semicolon);
     auto body = parseBlock();
     match(TokenType::Semicolon);
-    auto node = std::make_unique<ProcedureDecl>(std::move(name), std::move(params),
-                                                std::move(body));
+    auto node = std::make_unique<ProcedureDecl>(
+        std::move(name), std::move(params), std::move(body));
     node->line = startTok.line;
     node->column = startTok.column;
     return node;
@@ -170,8 +226,9 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
 }
 
 static bool is_op(TokenType t) {
-  return t == TokenType::Plus || t == TokenType::Minus || t == TokenType::Star ||
-         t == TokenType::Slash || t == TokenType::Equal || t == TokenType::Less ||
+  return t == TokenType::Plus || t == TokenType::Minus ||
+         t == TokenType::Star || t == TokenType::Slash ||
+         t == TokenType::Equal || t == TokenType::Less ||
          t == TokenType::Greater || t == TokenType::LessEqual ||
          t == TokenType::GreaterEqual || t == TokenType::Div ||
          t == TokenType::Mod || t == TokenType::And || t == TokenType::Or;
@@ -292,9 +349,8 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     if (match(TokenType::Else)) {
       elseBranch = parseStatement();
     }
-    auto node =
-        std::make_unique<IfStmt>(std::move(cond), std::move(thenBranch),
-                                 std::move(elseBranch));
+    auto node = std::make_unique<IfStmt>(std::move(cond), std::move(thenBranch),
+                                         std::move(elseBranch));
     node->line = startTok.line;
     node->column = startTok.column;
     return node;
@@ -374,7 +430,8 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     auto recordVar = parseExpression();
     match(TokenType::Do);
     auto body = parseStatement();
-    auto node = std::make_unique<WithStmt>(std::move(recordVar), std::move(body));
+    auto node =
+        std::make_unique<WithStmt>(std::move(recordVar), std::move(body));
     node->line = startTok.line;
     node->column = startTok.column;
     return node;
@@ -408,10 +465,10 @@ std::unique_ptr<Statement> Parser::parseStatement() {
       }
       match(TokenType::RightParen);
       match(TokenType::Semicolon);
-    auto node = std::make_unique<ProcCall>(id, std::move(args));
-    node->line = startTok.line;
-    node->column = startTok.column;
-    return node;
+      auto node = std::make_unique<ProcCall>(id, std::move(args));
+      node->line = startTok.line;
+      node->column = startTok.column;
+      return node;
     }
 
     auto var = parseVariable(id);
@@ -419,8 +476,7 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     match(TokenType::Assign);
     auto val = parseExpression();
     match(TokenType::Semicolon);
-    auto node =
-        std::make_unique<AssignStmt>(std::move(var), std::move(val));
+    auto node = std::make_unique<AssignStmt>(std::move(var), std::move(val));
     node->line = startTok.line;
     node->column = startTok.column;
     return node;

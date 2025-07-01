@@ -94,7 +94,7 @@ record_type     = 'record' var_decl { var_decl } 'end' ;
 
 pointer_type    = '^' identifier ;
 
-statement_list  = statement { ';' statement } ;
+statement_list  = { statement }
 
 statement       = assignment
                 | procedure_call

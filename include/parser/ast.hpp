@@ -39,7 +39,8 @@ enum class NodeKind {
   PointerTypeSpec,
   CaseLabel,
   NewExpr,
-  DisposeExpr
+  DisposeExpr,
+  IdentifierList
 };
 
 // Forward declarations for visitor
@@ -73,11 +74,13 @@ struct PointerTypeSpec;
 struct CaseLabel;
 struct NewExpr;
 struct DisposeExpr;
+struct IdentifierList;
 
 class NodeVisitor {
 public:
   virtual ~NodeVisitor();
   virtual void visitProgram(const Program &) = 0;
+  virtual void visitIdentifierList(const IdentifierList &) = 0;
   virtual void visitBlock(const Block &) = 0;
   virtual void visitVarDecl(const VarDecl &) = 0;
   virtual void visitParamDecl(const ParamDecl &) = 0;
@@ -166,8 +169,37 @@ struct Block : ASTNode {
   void accept(NodeVisitor &v) const override { v.visitBlock(*this); }
 };
 
+struct IdentifierList : ASTNode {
+  std::vector<std::string> identifiers;
+  IdentifierList() : ASTNode(NodeKind::IdentifierList) {}
+  IdentifierList(const IdentifierList &) = default;
+  IdentifierList(IdentifierList &&id_list)
+      : ASTNode(NodeKind::IdentifierList),
+        identifiers(std::move(id_list.identifiers)) {}
+  IdentifierList &operator=(const IdentifierList &) = default;
+  IdentifierList &operator=(IdentifierList &&id_list) {
+    if (this != &id_list) {
+      identifiers = std::move(id_list.identifiers);
+    }
+    return *this;
+  }
+  explicit IdentifierList(std::vector<std::string> ids)
+      : ASTNode(NodeKind::IdentifierList), identifiers(std::move(ids)) {}
+  ~IdentifierList() override;
+  void accept(NodeVisitor &v) const override { v.visitIdentifierList(*this); }
+
+  auto empty() const { return identifiers.empty(); }
+
+  // Iterator support
+  auto begin() { return identifiers.begin(); }
+  auto end() { return identifiers.end(); }
+
+  auto begin() const { return identifiers.begin(); }
+  auto end() const { return identifiers.end(); }
+};
+
 struct VarDecl : Declaration {
-  std::vector<std::string> names;
+  IdentifierList names;
   std::unique_ptr<TypeSpec> type;
 
   VarDecl();

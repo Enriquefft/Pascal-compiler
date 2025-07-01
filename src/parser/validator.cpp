@@ -201,6 +201,15 @@ void ASTValidator::visitRepeatStmt(const RepeatStmt &node) {
     node.condition->accept(*this);
 }
 
+void ASTValidator::visitIdentifierList(const IdentifierList &node) {
+  if (node.identifiers.empty())
+    setError("IdentifierList empty", node);
+  for (const auto &id : node.identifiers) {
+    if (id.empty())
+      setError("IdentifierList contains empty identifier", node);
+  }
+}
+
 void ASTValidator::visitCaseStmt(const CaseStmt &node) {
   if (!node.expr)
     setError("CaseStmt missing expression", node);
