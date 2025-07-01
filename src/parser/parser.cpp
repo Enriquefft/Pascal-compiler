@@ -41,7 +41,7 @@ std::unique_ptr<Block> Parser::parseBlock() {
 
   while (!isAtEnd()) {
     if (peek().type == TokenType::Var || peek().type == TokenType::Function ||
-        peek().type == TokenType::Procedure) {
+        peek().type == TokenType::Procedure || peek().type == TokenType::Type) {
       auto decl = parseDeclaration();
       if (decl)
         decls.push_back(std::move(decl));
@@ -74,6 +74,16 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
     auto type = parseTypeSpec();
     match(TokenType::Semicolon);
     return std::make_unique<VarDecl>(std::move(names), std::move(type));
+  }
+
+  if (match(TokenType::Type)) {
+    std::string name;
+    if (peek().type == TokenType::Identifier)
+      name = advance().lexeme;
+    match(TokenType::Equal);
+    auto type = parseTypeSpec();
+    match(TokenType::Semicolon);
+    return std::make_unique<TypeDecl>(std::move(name), std::move(type));
   }
 
   if (match(TokenType::Function)) {
@@ -141,6 +151,27 @@ static bool is_op(TokenType t) {
          t == TokenType::Mod || t == TokenType::And || t == TokenType::Or;
 }
 
+std::unique_ptr<VariableExpr> Parser::parseVariable(std::string name) {
+  std::vector<VariableExpr::Selector> sels;
+  while (true) {
+    if (match(TokenType::Caret)) {
+      sels.emplace_back("", VariableExpr::Selector::Kind::Pointer);
+    } else if (match(TokenType::LeftBracket)) {
+      auto idx = parseExpression();
+      match(TokenType::RightBracket);
+      sels.emplace_back(std::move(idx));
+    } else if (match(TokenType::Dot)) {
+      std::string field;
+      if (peek().type == TokenType::Identifier)
+        field = advance().lexeme;
+      sels.emplace_back(field, VariableExpr::Selector::Kind::Field);
+    } else {
+      break;
+    }
+  }
+  return std::make_unique<VariableExpr>(std::move(name), std::move(sels));
+}
+
 std::unique_ptr<Expression> Parser::parseExpression() {
   // parse literal or variable
   std::unique_ptr<Expression> left;
@@ -163,16 +194,7 @@ std::unique_ptr<Expression> Parser::parseExpression() {
       val += "'";
       left = std::make_unique<LiteralExpr>(val);
     } else {
-      std::vector<VariableExpr::Selector> sels;
-      while (match(TokenType::Caret)) {
-        sels.emplace_back("", VariableExpr::Selector::Kind::Pointer);
-      }
-      while (match(TokenType::LeftBracket)) {
-        auto idx = parseExpression();
-        match(TokenType::RightBracket);
-        sels.emplace_back(std::move(idx));
-      }
-      left = std::make_unique<VariableExpr>(id, std::move(sels));
+      left = parseVariable(id);
     }
   } else if (match(TokenType::LeftParen)) {
     left = parseExpression();
@@ -181,11 +203,14 @@ std::unique_ptr<Expression> Parser::parseExpression() {
     left = std::make_unique<LiteralExpr>("0");
   }
 
-  if (is_op(peek().type) || (peek().type == TokenType::Less &&
-                              m_current + 1 < m_tokens.size() &&
-                              m_tokens[m_current + 1].type == TokenType::Greater)) {
+  if (is_op(peek().type) ||
+      (peek().type == TokenType::Less && m_current + 1 < m_tokens.size() &&
+       m_tokens[m_current + 1].type == TokenType::Greater)) {
     std::string op;
-    if (match(TokenType::Less) && match(TokenType::Greater)) {
+    if (peek().type == TokenType::Less && m_current + 1 < m_tokens.size() &&
+        m_tokens[m_current + 1].type == TokenType::Greater) {
+      advance();
+      advance();
       op = "<>";
     } else {
       op = advance().lexeme;
@@ -280,6 +305,13 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     return std::make_unique<CaseStmt>(std::move(expr), std::move(cases));
   }
 
+  if (match(TokenType::With)) {
+    auto recordVar = parseExpression();
+    match(TokenType::Do);
+    auto body = parseStatement();
+    return std::make_unique<WithStmt>(std::move(recordVar), std::move(body));
+  }
+
   if (match(TokenType::New) || match(TokenType::Dispose)) {
     std::string name = m_tokens[m_current - 1].lexeme;
     match(TokenType::LeftParen);
@@ -293,7 +325,22 @@ std::unique_ptr<Statement> Parser::parseStatement() {
   }
 
   if (peek().type == TokenType::Identifier) {
-    auto var = parseExpression();
+    std::string id = advance().lexeme;
+    if (peek().type == TokenType::LeftParen) {
+      match(TokenType::LeftParen);
+      std::vector<std::unique_ptr<Expression>> args;
+      if (peek().type != TokenType::RightParen) {
+        args.push_back(parseExpression());
+        while (match(TokenType::Comma)) {
+          args.push_back(parseExpression());
+        }
+      }
+      match(TokenType::RightParen);
+      match(TokenType::Semicolon);
+      return std::make_unique<ProcCall>(id, std::move(args));
+    }
+
+    auto var = parseVariable(id);
     match(TokenType::Colon);
     match(TokenType::Assign);
     auto val = parseExpression();
@@ -329,6 +376,22 @@ std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
     match(TokenType::Of);
     auto elem = parseTypeSpec();
     return std::make_unique<ArrayTypeSpec>(std::move(ranges), std::move(elem));
+  }
+
+  if (match(TokenType::Record)) {
+    std::vector<std::unique_ptr<VarDecl>> fields;
+    while (!isAtEnd() && peek().type != TokenType::End) {
+      std::vector<std::string> names;
+      if (peek().type == TokenType::Identifier)
+        names.push_back(advance().lexeme);
+      match(TokenType::Colon);
+      auto ftype = parseTypeSpec();
+      match(TokenType::Semicolon);
+      fields.emplace_back(
+          std::make_unique<VarDecl>(std::move(names), std::move(ftype)));
+    }
+    match(TokenType::End);
+    return std::make_unique<RecordTypeSpec>(std::move(fields));
   }
 
   if (match(TokenType::Identifier)) {
