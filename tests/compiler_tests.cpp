@@ -656,13 +656,12 @@ TEST(UnsignedTests, Uns4) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .bss\n\n"
-                             "section .text\n"
+  std::string expected_asm = "section .text\n"
                              "global f\n"
                              "f:\n"
-                             "    mov    rax, 0\n"
-                             "    ret\n"
-                             "global main\n"
+                              "    mov    rax, 0\n"
+                              "    ret\n"
+                              "global main\n"
                              "main:\n"
                              "    ret\n";
   std::string expected_output = "";
@@ -857,8 +856,7 @@ TEST(LongIntTests, Long4) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .bss\n\n"
-                             "section .text\n"
+  std::string expected_asm = "section .text\n"
                              "global f\n"
                              "f:\n"
                              "    mov    rax, 0\n"
@@ -949,13 +947,12 @@ TEST(FunctionTests, Func1) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .bss\n\n"
-                             "section .text\n"
+  std::string expected_asm = "section .text\n"
                              "global f\n"
                              "f:\n"
-                             "    mov    rax, 0\n"
-                             "    ret\n"
-                             "global main\n"
+                              "    mov    rax, 0\n"
+                              "    ret\n"
+                              "global main\n"
                              "main:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
@@ -984,12 +981,11 @@ TEST(FunctionTests, Func2) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .bss\n\n"
-                             "section .text\n"
+  std::string expected_asm = "section .text\n"
                              "global p\n"
                              "p:\n"
-                             "    ret\n"
-                             "global main\n"
+                              "    ret\n"
+                              "global main\n"
                              "main:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
@@ -1043,8 +1039,7 @@ TEST(FunctionTests, Func3) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .bss\n\n"
-                             "section .text\n"
+  std::string expected_asm = "section .text\n"
                              "global g\n"
                              "g:\n"
                              "    mov    rax, rdi\n"
@@ -1237,10 +1232,10 @@ TEST(FloatTests, Float5) {
 
   std::string expected_asm = "section .text\n"
                              "global f\n"
-                             "global main\n"
                              "f:\n"
                              "    mov    rax, 0x0000000000000000\n"
                              "    ret\n"
+                             "global main\n"
                              "main:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
@@ -1517,13 +1512,13 @@ TEST(StringTests, Str3) {
   expected_ast.valid = true;
 
   std::string expected_asm = "section .data\n"
-                             "str1: db \"!\", 0\n\n"
+                             "str0: db \"!\", 0\n\n"
                              "section .bss\n"
                              "s:    resq    1\n\n"
                              "section .text\n"
                              "global main\n"
                              "main:\n"
-                             "    mov    qword [s], str1\n"
+                             "    mov    qword [s], str0\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
@@ -1593,17 +1588,17 @@ TEST(StringTests, Str5) {
   expected_ast.valid = true;
 
   std::string expected_asm = "section .data\n"
-                             "str2: db 0\n"
-                             "str3: db \"a\", 0\n\n"
+                             "str0: db 0\n"
+                             "str1: db \"a\", 0\n\n"
                              "section .bss\n"
                              "s:    resq    1\n\n"
                              "section .text\n"
                              "global main\n"
                              "main:\n"
                              "    mov    rax, [s]\n"
-                             "    cmp    rax, str2\n"
+                             "    cmp    rax, str0\n"
                              "    jne    L1\n"
-                             "    mov    qword [s], str3\n"
+                             "    mov    qword [s], str1\n"
                              "L1:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");

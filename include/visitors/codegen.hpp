@@ -24,7 +24,7 @@ public:
   void visitFunctionDecl(const FunctionDecl &node) override;
   void visitCompoundStmt(const CompoundStmt &node) override;
   void visitAssignStmt(const AssignStmt &node) override;
-  void visitProcCall(const ProcCall & /*node*/) override {}
+  void visitProcCall(const ProcCall &node) override;
   void visitIfStmt(const IfStmt &node) override;
   void visitWhileStmt(const WhileStmt &node) override;
   void visitForStmt(const ForStmt &node) override;
@@ -50,13 +50,19 @@ private:
   void genExpr(const Expression *expr);
   void collectVars(const ASTNode *node);
   void addVar(const std::string &name);
+  std::string addString(const std::string &value);
   std::string makeLabel();
 
   std::string m_output;
   std::vector<std::string> m_vars;
   std::unordered_set<std::string> m_varSet;
   std::unordered_map<std::string, std::string> m_paramMap;
+  std::unordered_map<std::string, std::string> m_stringMap;
+  std::vector<std::pair<std::string, std::string>> m_strings;
   std::string m_currentFunction;
+  bool m_needMalloc{false};
+  bool m_needFree{false};
+  bool m_needPuts{false};
   int m_labelCounter{0};
 };
 

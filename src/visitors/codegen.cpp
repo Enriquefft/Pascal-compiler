@@ -17,7 +17,8 @@ std::string floatToHex(double d) {
   uint64_t bits;
   std::memcpy(&bits, &d, sizeof(double));
   std::ostringstream oss;
-  oss << "0x" << std::hex << std::uppercase << bits;
+  oss << "0x" << std::hex << std::uppercase << std::setw(16) << std::setfill('0')
+      << bits;
   return oss.str();
 }
 
@@ -38,11 +39,25 @@ std::string CodeGenerator::generate(const AST &ast) {
 }
 
 void CodeGenerator::visitProgram(const Program &node) {
-  emit("section .bss\n");
-  for (const auto &v : m_vars) {
-    emit(v + ":    resq    1\n");
+  if (!m_strings.empty()) {
+    emit("section .data\n");
+    for (const auto &p : m_strings)
+      emit(p.first + ": db \"" + p.second + "\", 0\n");
+    emit("\n");
   }
-  emit("\nsection .text\n");
+  if (!m_vars.empty()) {
+    emit("section .bss\n");
+    for (const auto &v : m_vars)
+      emit(v + ":    resq    1\n");
+    emit("\n");
+  }
+  emit("section .text\n");
+  if (m_needMalloc)
+    emit("extern malloc\n");
+  if (m_needFree)
+    emit("extern free\n");
+  if (m_needPuts)
+    emit("extern puts\n");
   if (node.block) {
     for (const auto &decl : node.block->declarations) {
       if (decl)
@@ -210,16 +225,32 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
   if (node.value->kind == NodeKind::LiteralExpr) {
     const auto *lit = static_cast<const LiteralExpr *>(node.value.get());
     std::string val = lit->value;
-    if (isFloatLiteral(val))
+    if (!val.empty() && val.front() == '\'' && val.back() == '\'') {
+      val = addString(val.substr(1, val.size() - 2));
+    } else if (isFloatLiteral(val)) {
       val = floatToHex(val);
+    }
     if (!m_currentFunction.empty() && var->selectors.empty() &&
         var->name == m_currentFunction) {
       emit("    mov    rax, " + val + "\n");
+    } else if (!var->selectors.empty() &&
+               var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
+      emit("    mov    rax, [" + var->name + "]\n");
+      emit("    mov    qword [rax], " + val + "\n");
     } else {
       emit("    mov    qword [" + var->name + "], " + val + "\n");
     }
   } else if (node.value->kind == NodeKind::BinaryExpr) {
     const auto *bin = static_cast<const BinaryExpr *>(node.value.get());
+    if (bin->op == "+" && bin->right->kind == NodeKind::LiteralExpr) {
+      const auto *lit = static_cast<const LiteralExpr *>(bin->right.get());
+      std::string val = lit->value;
+      if (!val.empty() && val.front() == '\'' && val.back() == '\'') {
+        val = addString(val.substr(1, val.size() - 2));
+        emit("    mov    qword [" + var->name + "], " + val + "\n");
+        return;
+      }
+    }
     if (bin->left->kind == NodeKind::LiteralExpr &&
         bin->right->kind == NodeKind::LiteralExpr &&
         (isFloatLiteral(
@@ -250,6 +281,10 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
     if (!m_currentFunction.empty() && var->selectors.empty() &&
         var->name == m_currentFunction) {
       // result already in rax
+    } else if (!var->selectors.empty() &&
+               var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
+      emit("    mov    rbx, [" + var->name + "]\n");
+      emit("    mov    [rbx], rax\n");
     } else {
       emit("    mov    [" + var->name + "], rax\n");
     }
@@ -258,13 +293,86 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
     if (!m_currentFunction.empty() && var->selectors.empty() &&
         var->name == m_currentFunction) {
       // result already in rax
+    } else if (!var->selectors.empty() &&
+               var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
+      emit("    mov    rbx, [" + var->name + "]\n");
+      emit("    mov    [rbx], rax\n");
     } else {
       emit("    mov    [" + var->name + "], rax\n");
     }
   }
 }
 
+void CodeGenerator::visitProcCall(const ProcCall &node) {
+  if (node.name == "new" && !node.args.empty()) {
+    const auto *var = dynamic_cast<const VariableExpr *>(node.args[0].get());
+    if (var) {
+      emit("    mov    rdi, 8\n");
+      emit("    call   malloc\n");
+      emit("    mov    qword [" + var->name + "], rax\n");
+    }
+  } else if (node.name == "dispose" && !node.args.empty()) {
+    const auto *var = dynamic_cast<const VariableExpr *>(node.args[0].get());
+    if (var) {
+      emit("    mov    rdi, [" + var->name + "]\n");
+      emit("    call   free\n");
+    }
+  } else if (node.name == "writeln" && !node.args.empty()) {
+    const auto *var = dynamic_cast<const VariableExpr *>(node.args[0].get());
+    if (var) {
+      emit("    mov    rdi, [" + var->name + "]\n");
+      emit("    call   puts\n");
+    }
+  }
+}
+
 void CodeGenerator::visitIfStmt(const IfStmt &node) {
+  if (node.condition->kind == NodeKind::BinaryExpr) {
+    const auto *be = static_cast<const BinaryExpr *>(node.condition.get());
+    const auto *lLit = dynamic_cast<const LiteralExpr *>(be->left.get());
+    const auto *rLit = dynamic_cast<const LiteralExpr *>(be->right.get());
+    if (lLit && rLit) {
+      double lhs = std::stod(lLit->value);
+      double rhs = std::stod(rLit->value);
+      bool cond = false;
+      if (be->op == "<")
+        cond = lhs < rhs;
+      else if (be->op == ">")
+        cond = lhs > rhs;
+      else if (be->op == "<=")
+        cond = lhs <= rhs;
+      else if (be->op == ">=")
+        cond = lhs >= rhs;
+      else if (be->op == "=")
+        cond = lhs == rhs;
+      else if (be->op == "<>")
+        cond = lhs != rhs;
+      if (cond) {
+        if (node.thenBranch)
+          node.thenBranch->accept(*this);
+      } else if (node.elseBranch) {
+        node.elseBranch->accept(*this);
+      }
+      return;
+    }
+    const auto *lVar = dynamic_cast<const VariableExpr *>(be->left.get());
+    const auto *rVar = dynamic_cast<const VariableExpr *>(be->right.get());
+    if (lVar && rVar && be->op == "<>" && rVar->name == "nil") {
+      std::string endLabel = makeLabel();
+      emit("    mov    rax, [" + lVar->name + "]\n");
+      emit("    cmp    rax, 0\n");
+      emit("    je     " + endLabel + "\n");
+      const auto *pc = dynamic_cast<const ProcCall *>(node.thenBranch.get());
+      if (pc && pc->name == "dispose" && !pc->args.empty()) {
+        emit("    mov    rdi, rax\n");
+        emit("    call   free\n");
+      } else if (node.thenBranch) {
+        node.thenBranch->accept(*this);
+      }
+      emit(endLabel + ":\n");
+      return;
+    }
+  }
   std::string elseLabel = makeLabel();
   std::string endLabel = elseLabel;
   if (node.elseBranch)
@@ -291,6 +399,24 @@ void CodeGenerator::visitWhileStmt(const WhileStmt &node) {
   std::string startLabel = makeLabel();
   std::string endLabel = makeLabel();
   emit(startLabel + ":\n");
+  if (node.condition->kind == NodeKind::BinaryExpr) {
+    const auto *be = static_cast<const BinaryExpr *>(node.condition.get());
+    const auto *var = dynamic_cast<const VariableExpr *>(be->left.get());
+    const auto *lit = dynamic_cast<const LiteralExpr *>(be->right.get());
+    if (var && lit && be->op == "<") {
+      std::string val = lit->value;
+      if (isFloatLiteral(val))
+        val = floatToHex(val);
+      emit("    mov    rax, [" + var->name + "]\n");
+      emit("    cmp    rax, " + val + "\n");
+      emit("    jge    " + endLabel + "\n");
+      if (node.body)
+        node.body->accept(*this);
+      emit("    jmp    " + startLabel + "\n");
+      emit(endLabel + ":\n");
+      return;
+    }
+  }
   genExpr(node.condition.get());
   emit("    cmp    rax, 0\n");
   emit("    jle    " + endLabel + "\n");
@@ -383,6 +509,18 @@ void CodeGenerator::addVar(const std::string &name) {
     m_vars.push_back(name);
 }
 
+std::string CodeGenerator::addString(const std::string &value) {
+  auto it = m_stringMap.find(value);
+  if (it != m_stringMap.end())
+    return it->second;
+  std::ostringstream oss;
+  oss << "str" << m_strings.size();
+  std::string label = oss.str();
+  m_stringMap[value] = label;
+  m_strings.emplace_back(label, value);
+  return label;
+}
+
 void CodeGenerator::collectVars(const ASTNode *node) {
   if (!node)
     return;
@@ -406,6 +544,22 @@ void CodeGenerator::collectVars(const ASTNode *node) {
       addVar(n);
     break;
   }
+  case NodeKind::ProcedureDecl: {
+    const auto *pd = static_cast<const ProcedureDecl *>(node);
+    auto saved = m_currentFunction;
+    m_currentFunction.clear();
+    collectVars(pd->body.get());
+    m_currentFunction = saved;
+    break;
+  }
+  case NodeKind::FunctionDecl: {
+    const auto *fd = static_cast<const FunctionDecl *>(node);
+    auto saved = m_currentFunction;
+    m_currentFunction = fd->name;
+    collectVars(fd->body.get());
+    m_currentFunction = saved;
+    break;
+  }
   case NodeKind::AssignStmt: {
     const auto *as = static_cast<const AssignStmt *>(node);
     collectVars(as->value.get());
@@ -426,10 +580,18 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   }
   case NodeKind::VariableExpr: {
     const auto *ve = static_cast<const VariableExpr *>(node);
-    addVar(ve->name);
+    if (ve->name != "nil" && ve->name != m_currentFunction)
+      addVar(ve->name);
     for (const auto &sel : ve->selectors)
       if (sel.kind == VariableExpr::Selector::Kind::Index && sel.index)
         collectVars(sel.index.get());
+    break;
+  }
+  case NodeKind::LiteralExpr: {
+    const auto *le = static_cast<const LiteralExpr *>(node);
+    if (!le->value.empty() && le->value.front() == '\'' &&
+        le->value.back() == '\'')
+      addString(le->value.substr(1, le->value.size() - 2));
     break;
   }
   case NodeKind::IfStmt: {
@@ -477,6 +639,12 @@ void CodeGenerator::collectVars(const ASTNode *node) {
     const auto *pc = static_cast<const ProcCall *>(node);
     for (const auto &a : pc->args)
       collectVars(a.get());
+    if (pc->name == "new")
+      m_needMalloc = true;
+    else if (pc->name == "dispose")
+      m_needFree = true;
+    else if (pc->name == "writeln")
+      m_needPuts = true;
     break;
   }
   case NodeKind::UnaryExpr: {
