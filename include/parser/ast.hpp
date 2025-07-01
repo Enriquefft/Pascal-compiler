@@ -114,11 +114,14 @@ struct ASTNode {
   ASTNode(ASTNode &&) = delete;
   ASTNode &operator=(const ASTNode &) = default;
   ASTNode &operator=(ASTNode &&) = delete;
-  explicit ASTNode(NodeKind k) : kind(k) {}
+  explicit ASTNode(NodeKind k, std::size_t l = 0, std::size_t c = 0)
+      : kind(k), line(l), column(c) {}
   virtual ~ASTNode();
   virtual void accept(NodeVisitor &v) const = 0;
 
   NodeKind kind;
+  std::size_t line{0};
+  std::size_t column{0};
 };
 
 struct Expression : ASTNode {

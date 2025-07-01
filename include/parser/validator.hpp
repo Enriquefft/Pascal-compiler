@@ -7,7 +7,14 @@ namespace pascal {
 
 class ASTValidator : public NodeVisitor {
 public:
-  bool validate(const AST &ast);
+  struct Result {
+    bool success{true};
+    std::string message{};
+    std::size_t line{0};
+    std::size_t column{0};
+  };
+
+  Result validate(const AST &ast);
 
   void visitProgram(const Program &node) override;
   void visitBlock(const Block &node) override;
@@ -42,6 +49,10 @@ public:
 
 private:
   bool m_valid{true};
+  void setError(const std::string &msg, const ASTNode &node);
+  std::string m_errorMsg{};
+  std::size_t m_errorLine{0};
+  std::size_t m_errorColumn{0};
 };
 
 } // namespace pascal

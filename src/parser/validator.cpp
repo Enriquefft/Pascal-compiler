@@ -2,17 +2,33 @@
 
 namespace pascal {
 
-bool ASTValidator::validate(const AST &ast) {
+ASTValidator::Result ASTValidator::validate(const AST &ast) {
   m_valid = ast.valid && ast.root != nullptr;
-  if (!m_valid)
-    return false;
+  m_errorMsg.clear();
+  m_errorLine = 0;
+  m_errorColumn = 0;
+  if (!m_valid) {
+    m_errorMsg = "Invalid AST";
+    return {false, m_errorMsg, m_errorLine, m_errorColumn};
+  }
   ast.root->accept(*this);
-  return m_valid;
+  return {m_valid, m_errorMsg, m_errorLine, m_errorColumn};
+}
+
+void ASTValidator::setError(const std::string &msg, const ASTNode &node) {
+  if (m_errorMsg.empty()) {
+    m_errorMsg = msg;
+    m_errorLine = node.line;
+    m_errorColumn = node.column;
+  }
+  m_valid = false;
 }
 
 void ASTValidator::visitProgram(const Program &node) {
-  if (node.name.empty() || !node.block)
-    m_valid = false;
+  if (node.name.empty())
+    setError("Program missing name", node);
+  else if (!node.block)
+    setError("Program missing block", node);
   if (node.block)
     node.block->accept(*this);
 }
@@ -20,52 +36,62 @@ void ASTValidator::visitProgram(const Program &node) {
 void ASTValidator::visitBlock(const Block &node) {
   for (const auto &decl : node.declarations) {
     if (!decl)
-      m_valid = false;
+      setError("Null declaration", node);
     else
       decl->accept(*this);
   }
   for (const auto &stmt : node.statements) {
     if (!stmt)
-      m_valid = false;
+      setError("Null statement", node);
     else
       stmt->accept(*this);
   }
 }
 
 void ASTValidator::visitVarDecl(const VarDecl &node) {
-  if (node.names.empty() || !node.type)
-    m_valid = false;
+  if (node.names.empty())
+    setError("VarDecl missing names", node);
+  else if (!node.type)
+    setError("VarDecl missing type", node);
   if (node.type)
     node.type->accept(*this);
 }
 
 void ASTValidator::visitParamDecl(const ParamDecl &node) {
-  if (node.names.empty() || !node.type)
-    m_valid = false;
+  if (node.names.empty())
+    setError("ParamDecl missing names", node);
+  else if (!node.type)
+    setError("ParamDecl missing type", node);
   if (node.type)
     node.type->accept(*this);
 }
 
 void ASTValidator::visitConstDecl(const ConstDecl &node) {
-  if (node.name.empty() || !node.value)
-    m_valid = false;
+  if (node.name.empty())
+    setError("ConstDecl missing name", node);
+  else if (!node.value)
+    setError("ConstDecl missing value", node);
   if (node.value)
     node.value->accept(*this);
 }
 
 void ASTValidator::visitTypeDecl(const TypeDecl &node) {
-  if (node.name.empty() || !node.type)
-    m_valid = false;
+  if (node.name.empty())
+    setError("TypeDecl missing name", node);
+  else if (!node.type)
+    setError("TypeDecl missing type", node);
   if (node.type)
     node.type->accept(*this);
 }
 
 void ASTValidator::visitProcedureDecl(const ProcedureDecl &node) {
-  if (node.name.empty() || !node.body)
-    m_valid = false;
+  if (node.name.empty())
+    setError("ProcedureDecl missing name", node);
+  else if (!node.body)
+    setError("ProcedureDecl missing body", node);
   for (const auto &p : node.params) {
     if (!p)
-      m_valid = false;
+      setError("Null parameter", node);
     else
       p->accept(*this);
   }
@@ -74,11 +100,15 @@ void ASTValidator::visitProcedureDecl(const ProcedureDecl &node) {
 }
 
 void ASTValidator::visitFunctionDecl(const FunctionDecl &node) {
-  if (node.name.empty() || !node.returnType || !node.body)
-    m_valid = false;
+  if (node.name.empty())
+    setError("FunctionDecl missing name", node);
+  else if (!node.returnType)
+    setError("FunctionDecl missing return type", node);
+  else if (!node.body)
+    setError("FunctionDecl missing body", node);
   for (const auto &p : node.params) {
     if (!p)
-      m_valid = false;
+      setError("Null parameter", node);
     else
       p->accept(*this);
   }
@@ -91,15 +121,17 @@ void ASTValidator::visitFunctionDecl(const FunctionDecl &node) {
 void ASTValidator::visitCompoundStmt(const CompoundStmt &node) {
   for (const auto &s : node.statements) {
     if (!s)
-      m_valid = false;
+      setError("Null statement", node);
     else
       s->accept(*this);
   }
 }
 
 void ASTValidator::visitAssignStmt(const AssignStmt &node) {
-  if (!node.target || !node.value)
-    m_valid = false;
+  if (!node.target)
+    setError("AssignStmt missing target", node);
+  else if (!node.value)
+    setError("AssignStmt missing value", node);
   if (node.target)
     node.target->accept(*this);
   if (node.value)
@@ -108,18 +140,20 @@ void ASTValidator::visitAssignStmt(const AssignStmt &node) {
 
 void ASTValidator::visitProcCall(const ProcCall &node) {
   if (node.name.empty())
-    m_valid = false;
+    setError("ProcCall missing name", node);
   for (const auto &a : node.args) {
     if (!a)
-      m_valid = false;
+      setError("Null argument", node);
     else
       a->accept(*this);
   }
 }
 
 void ASTValidator::visitIfStmt(const IfStmt &node) {
-  if (!node.condition || !node.thenBranch)
-    m_valid = false;
+  if (!node.condition)
+    setError("IfStmt missing condition", node);
+  else if (!node.thenBranch)
+    setError("IfStmt missing then branch", node);
   if (node.condition)
     node.condition->accept(*this);
   if (node.thenBranch)
@@ -129,8 +163,10 @@ void ASTValidator::visitIfStmt(const IfStmt &node) {
 }
 
 void ASTValidator::visitWhileStmt(const WhileStmt &node) {
-  if (!node.condition || !node.body)
-    m_valid = false;
+  if (!node.condition)
+    setError("WhileStmt missing condition", node);
+  else if (!node.body)
+    setError("WhileStmt missing body", node);
   if (node.condition)
     node.condition->accept(*this);
   if (node.body)
@@ -138,8 +174,12 @@ void ASTValidator::visitWhileStmt(const WhileStmt &node) {
 }
 
 void ASTValidator::visitForStmt(const ForStmt &node) {
-  if (!node.init || !node.limit || !node.body)
-    m_valid = false;
+  if (!node.init)
+    setError("ForStmt missing init", node);
+  else if (!node.limit)
+    setError("ForStmt missing limit", node);
+  else if (!node.body)
+    setError("ForStmt missing body", node);
   if (node.init)
     node.init->accept(*this);
   if (node.limit)
@@ -150,10 +190,10 @@ void ASTValidator::visitForStmt(const ForStmt &node) {
 
 void ASTValidator::visitRepeatStmt(const RepeatStmt &node) {
   if (!node.condition)
-    m_valid = false;
+    setError("RepeatStmt missing condition", node);
   for (const auto &s : node.body) {
     if (!s)
-      m_valid = false;
+      setError("Null statement", node);
     else
       s->accept(*this);
   }
@@ -163,20 +203,22 @@ void ASTValidator::visitRepeatStmt(const RepeatStmt &node) {
 
 void ASTValidator::visitCaseStmt(const CaseStmt &node) {
   if (!node.expr)
-    m_valid = false;
+    setError("CaseStmt missing expression", node);
   if (node.expr)
     node.expr->accept(*this);
   for (const auto &c : node.cases) {
     if (!c)
-      m_valid = false;
+      setError("Null case label", node);
     else
       c->accept(*this);
   }
 }
 
 void ASTValidator::visitWithStmt(const WithStmt &node) {
-  if (!node.recordExpr || !node.body)
-    m_valid = false;
+  if (!node.recordExpr)
+    setError("WithStmt missing record expression", node);
+  else if (!node.body)
+    setError("WithStmt missing body", node);
   if (node.recordExpr)
     node.recordExpr->accept(*this);
   if (node.body)
@@ -184,8 +226,12 @@ void ASTValidator::visitWithStmt(const WithStmt &node) {
 }
 
 void ASTValidator::visitBinaryExpr(const BinaryExpr &node) {
-  if (!node.left || !node.right || node.op.empty())
-    m_valid = false;
+  if (!node.left)
+    setError("BinaryExpr missing left operand", node);
+  else if (!node.right)
+    setError("BinaryExpr missing right operand", node);
+  else if (node.op.empty())
+    setError("BinaryExpr missing operator", node);
   if (node.left)
     node.left->accept(*this);
   if (node.right)
@@ -193,20 +239,22 @@ void ASTValidator::visitBinaryExpr(const BinaryExpr &node) {
 }
 
 void ASTValidator::visitUnaryExpr(const UnaryExpr &node) {
-  if (!node.operand || node.op.empty())
-    m_valid = false;
+  if (!node.operand)
+    setError("UnaryExpr missing operand", node);
+  else if (node.op.empty())
+    setError("UnaryExpr missing operator", node);
   if (node.operand)
     node.operand->accept(*this);
 }
 
 void ASTValidator::visitLiteralExpr(const LiteralExpr &node) {
   if (node.value.empty())
-    m_valid = false;
+    setError("LiteralExpr empty value", node);
 }
 
 void ASTValidator::visitVariableExpr(const VariableExpr &node) {
   if (node.name.empty())
-    m_valid = false;
+    setError("VariableExpr missing name", node);
   for (const auto &sel : node.selectors) {
     if (sel.kind == VariableExpr::Selector::Kind::Index && sel.index)
       sel.index->accept(*this);
@@ -215,7 +263,7 @@ void ASTValidator::visitVariableExpr(const VariableExpr &node) {
 
 void ASTValidator::visitRange(const Range &node) {
   if (node.start > node.end)
-    m_valid = false;
+    setError("Invalid range", node);
 }
 
 void ASTValidator::visitTypeSpec(const TypeSpec & /*node*/) {}
@@ -226,17 +274,17 @@ void ASTValidator::visitArrayTypeSpec(const ArrayTypeSpec &node) {
   for (const auto &r : node.ranges)
     visitRange(r);
   if (!node.elementType)
-    m_valid = false;
+    setError("ArrayTypeSpec missing element type", node);
   if (node.elementType)
     node.elementType->accept(*this);
 }
 
 void ASTValidator::visitRecordTypeSpec(const RecordTypeSpec &node) {
   if (node.fields.empty())
-    m_valid = false;
+    setError("RecordTypeSpec with no fields", node);
   for (const auto &f : node.fields) {
     if (!f)
-      m_valid = false;
+      setError("Null field", node);
     else
       f->accept(*this);
   }
@@ -244,17 +292,19 @@ void ASTValidator::visitRecordTypeSpec(const RecordTypeSpec &node) {
 
 void ASTValidator::visitPointerTypeSpec(const PointerTypeSpec &node) {
   if (!node.refType)
-    m_valid = false;
+    setError("PointerTypeSpec missing referenced type", node);
   if (node.refType)
     node.refType->accept(*this);
 }
 
 void ASTValidator::visitCaseLabel(const CaseLabel &node) {
-  if (node.constants.empty() || !node.stmt)
-    m_valid = false;
+  if (node.constants.empty())
+    setError("CaseLabel missing constants", node);
+  else if (!node.stmt)
+    setError("CaseLabel missing statement", node);
   for (const auto &c : node.constants) {
     if (!c)
-      m_valid = false;
+      setError("Null constant", node);
     else
       c->accept(*this);
   }
@@ -264,14 +314,14 @@ void ASTValidator::visitCaseLabel(const CaseLabel &node) {
 
 void ASTValidator::visitNewExpr(const NewExpr &node) {
   if (!node.variable)
-    m_valid = false;
+    setError("NewExpr missing variable", node);
   if (node.variable)
     node.variable->accept(*this);
 }
 
 void ASTValidator::visitDisposeExpr(const DisposeExpr &node) {
   if (!node.variable)
-    m_valid = false;
+    setError("DisposeExpr missing variable", node);
   if (node.variable)
     node.variable->accept(*this);
 }

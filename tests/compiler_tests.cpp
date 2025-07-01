@@ -900,9 +900,9 @@ TEST(FunctionTests, Func2) {
 }
 
 TEST(FunctionTests, Func3) {
-  std::string input_str = "function g(x: integer): integer; begin g:=x;
-      end;
-  "; std::vector<Token> expected_tokens = {{TT::Function, " function "},
+  std::string input_str =
+      "function g(x: integer): integer; begin g:=x; end;";
+  std::vector<Token> expected_tokens = {{TT::Function, "function"},
       {TT::Identifier, "g"},
       {TT::LeftParen, "("}, {TT::Identifier, "x"}, {TT::Colon, ":"},
       {TT::Identifier, "integer"}, {TT::RightParen, ")"}, {TT::Colon, ":"},
