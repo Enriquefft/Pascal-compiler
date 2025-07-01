@@ -119,7 +119,8 @@ inline void run_full(std::string_view src,
     return;
 
   ASTValidator validator;
-  EXPECT_TRUE(validator.validate(ast));
+  auto res = validator.validate(ast);
+  EXPECT_TRUE(res.success) << res.message;
 
   CodeGenerator codegen;
   auto asm_code = codegen.generate(ast);
@@ -153,7 +154,8 @@ run_validation_fail(std::string_view src,
   EXPECT_TRUE(ast_equal(ast, expected_ast));
 
   ASTValidator validator;
-  EXPECT_FALSE(validator.validate(ast));
+  auto res = validator.validate(ast);
+  EXPECT_FALSE(res.success);
 }
 
 } // namespace test_utils

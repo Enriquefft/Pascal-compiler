@@ -142,50 +142,86 @@ auto main(int /*argc*/, char* /*argv*/[]) -> int {
   // Health check endpoint used by CI or clients.
   CROW_ROUTE(app, "/health")([] { return "Hello world"; });
 
-  // Compilation endpoint.  Expects the Pascal source code in the request body
-  // and returns the tokens, AST validity, generated assembly, and execution
-  // output as JSON matching the TypeScript interface provided in the project
-  // description.
+  // Compilation endpoint. Expects the Pascal source code in the request body
+  // and returns a JSON object that matches the following TypeScript type:
+  //
+  // export type CompilationResult = {
+  //   tokens?: { token_name: string; token_content: string }[];
+  //   ast?: AST;
+  //   asm?: string;
+  //   output?: string;
+  //   error?: string;
+  //   line?: number;
+  //   column?: number;
+  // };
   CROW_ROUTE(app, "/compile").methods(crow::HTTPMethod::Post)(
       [](const crow::request& req) {
         const std::string& code = req.body;
 
-        // Run the compiler pipeline.
-        pascal::Lexer lexer(code);
-        std::vector<pascal::Token> tokens = lexer.scanTokens();
-
-        pascal::Parser parser(tokens);
-        pascal::AST ast = parser.parse();
-
-        pascal::ASTValidator validator;
-        bool ast_ok = validator.validate(ast);
-
-        pascal::CodeGenerator codegen;
-        std::string asm_code = codegen.generate(ast);
-
-        pascal::Executor exec;
-        std::string output = exec.run(asm_code);
-
-        // Build JSON response.
         crow::json::wvalue result;
+        std::vector<pascal::Token> tokens;
+        pascal::AST ast{};
+        std::string asm_code;
+        std::string output;
+        std::string error;
+        std::size_t errLine = 0;
+        std::size_t errColumn = 0;
 
-        // Tokens
+        try {
+          // Lexing
+          pascal::Lexer lexer(code);
+          tokens = lexer.scanTokens();
+
+          // Parsing
+          pascal::Parser parser(tokens);
+          ast = parser.parse();
+          if (!ast.valid || !ast.root) {
+            error = "Parsing failed";
+          }
+
+          // Validation
+          if (error.empty()) {
+            pascal::ASTValidator validator;
+            auto valRes = validator.validate(ast);
+            if (!valRes.success) {
+              error = valRes.message;
+              errLine = valRes.line;
+              errColumn = valRes.column;
+            }
+          }
+
+          // Code generation and execution
+          if (error.empty()) {
+            pascal::CodeGenerator codegen;
+            asm_code = codegen.generate(ast);
+
+            pascal::Executor exec;
+            output = exec.run(asm_code);
+          }
+        } catch (const std::exception& e) {
+          error = e.what();
+        }
+
+        // Fill tokens regardless of success
         for (std::size_t i = 0; i < tokens.size(); ++i) {
           result["tokens"][i]["token_name"] = tokenTypeToString(tokens[i].type);
           result["tokens"][i]["token_content"] = tokens[i].lexeme;
         }
 
-        // AST (only validity flag and null root for now)
-        if (ast.root) {
-          // When a full AST is implemented, serialization can be expanded here.
-          result["ast"]["root"] = crow::json::wvalue();
-        } else {
-          result["ast"]["root"] = nullptr;
-        }
-        result["ast"]["valid"] = ast_ok && ast.valid;
+        // AST validity flag only
+        result["ast"]["valid"] = ast.valid;
 
-        result["asm"] = asm_code;
-        result["output"] = output;
+        if (!asm_code.empty())
+          result["asm"] = asm_code;
+        if (!output.empty())
+          result["output"] = output;
+        if (!error.empty()) {
+          result["error"] = error;
+          if (errLine != 0)
+            result["line"] = static_cast<int>(errLine);
+          if (errColumn != 0)
+            result["column"] = static_cast<int>(errColumn);
+        }
 
         return result;
       });
