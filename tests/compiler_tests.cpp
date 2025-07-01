@@ -1,4 +1,7 @@
 #include "test_utils.hpp"
+// Diagnostics:
+// 1. In included file: call to deleted constructor of 'std::unique_ptr<pascal::Declaration>' [ovl_deleted_init]
+// 2. Too many errors emitted, stopping now [fatal_too_many_errors]
 #include <gtest/gtest.h>
 
 using pascal::AST;
@@ -103,6 +106,8 @@ TEST(ExpressionTests, Expr1) {
           std::vector<std::unique_ptr<pascal::Declaration>>{},
           std::vector<std::unique_ptr<pascal::Statement>>{
               std::make_unique<pascal::CompoundStmt>(
+// Diagnostics:
+// 1. In template: no matching function for call to 'construct_at' [ovl_no_viable_function_in_call]
                   std::vector<std::unique_ptr<pascal::Statement>>{
                       std::make_unique<pascal::AssignStmt>(
                           std::make_unique<pascal::VariableExpr>("a"),
