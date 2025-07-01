@@ -33,3 +33,18 @@ TEST(VarDeclTests, Decl1) {
 }
 ```
 - Each one of this hardcoded expected outputs, will be manually created & typed, no automated function for this.
+
+### Running tests
+
+You can build and run the entire test suite with:
+
+```bash
+make tests
+```
+
+To compile and run a single test file, pass the desired filename (from the
+`tests/` directory) using the `FILE` variable:
+
+```bash
+make tests FILE=print_tests.cpp
+```

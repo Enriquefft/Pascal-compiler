@@ -32,7 +32,11 @@ SRC = $(filter-out src/api.cpp,$(SRC_ALL))
 API_SRC = $(filter-out src/main.cpp,$(SRC_ALL))
 
 SRC_TEST = $(filter-out src/main.cpp src/api.cpp,$(SRC_ALL))
+ifdef FILE
+TEST_SRC = $(addprefix tests/,$(FILE))
+else
 TEST_SRC = $(wildcard tests/*.cpp)
+endif
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/compiler
 TEST_BIN = $(BUILD_DIR)/tests
@@ -48,17 +52,22 @@ compiler: $(TARGET)
 $(TARGET): $(SRC) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
 
+
 .PHONY: tests clean
 
 api: $(API_BIN)
 $(API_BIN): $(API_SRC) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(API_SRC) -o $(API_BIN)
 
+ifdef FILE
+tests: clean $(TEST_BIN)
+else
 tests: $(TEST_BIN)
+endif
+	cd tests && ./run_tests.sh $(FILTER)
 
 $(TEST_BIN): $(TEST_SRC) $(SRC_TEST) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(TEST_SRC) $(SRC_TEST) -lgtest -lgtest_main -lpthread -o $(TEST_BIN)
-	cd tests && ./run_tests.sh
 
 clean:
 	rm -rf $(BUILD_DIR)
