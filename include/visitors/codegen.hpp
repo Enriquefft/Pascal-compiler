@@ -30,7 +30,7 @@ public:
   void visitForStmt(const ForStmt &node) override;
   void visitRepeatStmt(const RepeatStmt &node) override;
   void visitCaseStmt(const CaseStmt &node) override;
-  void visitWithStmt(const WithStmt & /*node*/) override {}
+  void visitWithStmt(const WithStmt &node) override;
   void visitBinaryExpr(const BinaryExpr & /*node*/) override {}
   void visitUnaryExpr(const UnaryExpr & /*node*/) override {}
   void visitLiteralExpr(const LiteralExpr & /*node*/) override {}
@@ -49,13 +49,14 @@ private:
   void emit(const std::string &text);
   void genExpr(const Expression *expr);
   void collectVars(const ASTNode *node);
-  void addVar(const std::string &name);
+  void addVar(const std::string &name, size_t count = 1);
   std::string addString(const std::string &value);
   std::string makeLabel();
 
   std::string m_output;
-  std::vector<std::string> m_vars;
+  std::vector<std::pair<std::string, size_t>> m_vars;
   std::unordered_set<std::string> m_varSet;
+  std::unordered_set<std::string> m_params;
   std::unordered_map<std::string, std::string> m_paramMap;
   std::unordered_map<std::string, std::string> m_stringMap;
   std::vector<std::pair<std::string, std::string>> m_strings;
@@ -63,6 +64,7 @@ private:
   bool m_needMalloc{false};
   bool m_needFree{false};
   bool m_needPuts{false};
+  bool m_needPrintf{false};
   int m_labelCounter{0};
 };
 

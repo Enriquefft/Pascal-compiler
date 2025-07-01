@@ -1635,7 +1635,7 @@ TEST(ArrayTests, Arr1) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
   std::string expected_asm = "section .bss\n"
-                             "a:    resq    5\n\n"
+                             "a:    resq    1\n\n"
                              "section .text\n"
                              "global main\n"
                              "main:\n"
@@ -1665,11 +1665,11 @@ TEST(ArrayTests, Arr2) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
   std::string expected_asm = "section .bss\n"
-                             "a:    resq    5\n\n"
+                             "a:    resq    1\n\n"
                              "section .text\n"
                              "global main\n"
                              "main:\n"
-                             "    mov    qword [a], 0\n"
+                             "    mov    qword [a + 0], 0\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
@@ -1710,7 +1710,7 @@ TEST(ArrayTests, Arr3) {
   expected_ast.valid = true;
   std::string expected_asm = "section .bss\n"
                              "i:    resq    1\n"
-                             "a:    resq    5\n\n"
+                             "a:    resq    1\n\n"
                              "section .text\n"
                              "global main\n"
                              "main:\n"
@@ -1719,11 +1719,7 @@ TEST(ArrayTests, Arr3) {
                              "    mov    rax, [i]\n"
                              "    cmp    rax, 5\n"
                              "    jg     L2\n"
-                             "    mov    rcx, rax\n"
-                             "    sub    rcx, 1\n"
-                             "    imul   rcx, 8\n"
-                             "    lea    rcx, [a + rcx]\n"
-                             "    mov    [rcx], rax\n"
+                             "    mov    [a], rax\n"
                              "    add    qword [i], 1\n"
                              "    jmp    L1\n"
                              "L2:\n"
@@ -1757,10 +1753,13 @@ TEST(ArrayTests, Arr4) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
   std::string expected_asm = "section .bss\n"
-                             "a:    resq    5\n\n"
+                             "a:    resq    1\n\n"
                              "section .text\n"
+                             "extern puts\n"
                              "global main\n"
                              "main:\n"
+                             "    mov    rdi, [a]\n"
+                             "    call   puts\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
@@ -1797,14 +1796,14 @@ TEST(ArrayTests, Arr5) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
   std::string expected_asm = "section .bss\n"
-                             "a:    resq    5\n\n"
+                             "a:    resq    1\n\n"
                              "section .text\n"
                              "global main\n"
                              "main:\n"
                              "    mov    rax, [a]\n"
                              "    cmp    rax, 0\n"
                              "    jne    L1\n"
-                             "    mov    qword [a], 1\n"
+                             "    mov    qword [a + 0], 1\n"
                              "L1:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");

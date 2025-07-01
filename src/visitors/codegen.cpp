@@ -25,12 +25,18 @@ std::string floatToHex(double d) {
 std::string floatToHex(const std::string &v) {
   return floatToHex(std::stod(v));
 }
+
 } // namespace
 
 std::string CodeGenerator::generate(const AST &ast) {
   m_output.clear();
   m_vars.clear();
   m_varSet.clear();
+  m_params.clear();
+  m_paramMap.clear();
+  m_strings.clear();
+  m_stringMap.clear();
+  m_needMalloc = m_needFree = m_needPuts = m_needPrintf = false;
   if (ast.root) {
     collectVars(ast.root.get());
     ast.root->accept(*this);
@@ -39,16 +45,23 @@ std::string CodeGenerator::generate(const AST &ast) {
 }
 
 void CodeGenerator::visitProgram(const Program &node) {
-  if (!m_strings.empty()) {
+  bool hasData = m_needPrintf || !m_strings.empty();
+  if (hasData) {
     emit("section .data\n");
-    for (const auto &p : m_strings)
-      emit(p.first + ": db \"" + p.second + "\", 0\n");
+    if (m_needPrintf)
+      emit("fmt_int: db \"%d\", 10, 0\n");
+    for (const auto &p : m_strings) {
+      if (p.second.empty())
+        emit(p.first + ": db 0\n");
+      else
+        emit(p.first + ": db \"" + p.second + "\", 0\n");
+    }
     emit("\n");
   }
   if (!m_vars.empty()) {
     emit("section .bss\n");
     for (const auto &v : m_vars)
-      emit(v + ":    resq    1\n");
+      emit(v.first + ":    resq    " + std::to_string(v.second) + "\n");
     emit("\n");
   }
   emit("section .text\n");
@@ -58,6 +71,8 @@ void CodeGenerator::visitProgram(const Program &node) {
     emit("extern free\n");
   if (m_needPuts)
     emit("extern puts\n");
+  if (m_needPrintf)
+    emit("extern printf\n");
   if (node.block) {
     for (const auto &decl : node.block->declarations) {
       if (decl)
@@ -84,7 +99,7 @@ void CodeGenerator::visitBlock(const Block &node) {
 
 void CodeGenerator::visitVarDecl(const VarDecl &node) {
   for (const auto &n : node.names)
-    addVar(n);
+    addVar(n, 1);
 }
 
 void CodeGenerator::visitProcedureDecl(const ProcedureDecl &node) {
@@ -144,11 +159,34 @@ void CodeGenerator::genExpr(const Expression *expr) {
   }
   case NodeKind::VariableExpr: {
     const auto *var = static_cast<const VariableExpr *>(expr);
-    auto it = m_paramMap.find(var->name);
-    if (it != m_paramMap.end())
-      emit("    mov    rax, " + it->second + "\n");
-    else
-      emit("    mov    rax, [" + var->name + "]\n");
+    if (!var->selectors.empty() &&
+        var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
+      const auto &sel = var->selectors[0];
+      if (const auto *lit =
+              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
+        long idx = std::stol(lit->value);
+        long off = (idx - 1) * 8;
+        emit("    mov    rax, [" + var->name + " + " + std::to_string(off) +
+             "]\n");
+      } else if (const auto *iv =
+                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
+        auto it = m_paramMap.find(iv->name);
+        std::string reg = "rcx";
+        if (it != m_paramMap.end())
+          emit("    mov    " + reg + ", " + it->second + "\n");
+        else
+          emit("    mov    " + reg + ", [" + iv->name + "]\n");
+        emit("    sub    " + reg + ", 1\n");
+        emit("    imul   " + reg + ", 8\n");
+        emit("    mov    rax, [" + var->name + " + " + reg + "]\n");
+      }
+    } else {
+      auto it = m_paramMap.find(var->name);
+      if (it != m_paramMap.end())
+        emit("    mov    rax, " + it->second + "\n");
+      else
+        emit("    mov    rax, [" + var->name + "]\n");
+    }
     break;
   }
   case NodeKind::BinaryExpr: {
@@ -237,6 +275,27 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
                var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
       emit("    mov    rax, [" + var->name + "]\n");
       emit("    mov    qword [rax], " + val + "\n");
+    } else if (!var->selectors.empty() &&
+               var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
+      const auto &sel = var->selectors[0];
+      if (const auto *lit = dynamic_cast<const LiteralExpr *>(sel.index.get())) {
+        long idx = std::stol(lit->value);
+        long off = (idx - 1) * 8;
+        emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
+             "], " + val + "\n");
+      } else if (const auto *iv =
+                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
+        std::string reg = "rcx";
+        auto it = m_paramMap.find(iv->name);
+        if (it != m_paramMap.end())
+          emit("    mov    " + reg + ", " + it->second + "\n");
+        else
+          emit("    mov    " + reg + ", [" + iv->name + "]\n");
+        emit("    sub    " + reg + ", 1\n");
+        emit("    imul   " + reg + ", 8\n");
+        emit("    mov    qword [" + var->name + " + " + reg + "], " + val +
+             "\n");
+      }
     } else {
       emit("    mov    qword [" + var->name + "], " + val + "\n");
     }
@@ -285,6 +344,26 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
                var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
       emit("    mov    rbx, [" + var->name + "]\n");
       emit("    mov    [rbx], rax\n");
+    } else if (!var->selectors.empty() &&
+               var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
+      const auto &sel = var->selectors[0];
+      if (const auto *lit = dynamic_cast<const LiteralExpr *>(sel.index.get())) {
+        long idx = std::stol(lit->value);
+        long off = (idx - 1) * 8;
+        emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
+             "], rax\n");
+      } else if (const auto *iv =
+                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
+        std::string reg = "rcx";
+        auto it = m_paramMap.find(iv->name);
+        if (it != m_paramMap.end())
+          emit("    mov    " + reg + ", " + it->second + "\n");
+        else
+          emit("    mov    " + reg + ", [" + iv->name + "]\n");
+        emit("    sub    " + reg + ", 1\n");
+        emit("    imul   " + reg + ", 8\n");
+        emit("    mov    qword [" + var->name + " + " + reg + "], rax\n");
+      }
     } else {
       emit("    mov    [" + var->name + "], rax\n");
     }
@@ -297,6 +376,26 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
                var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer) {
       emit("    mov    rbx, [" + var->name + "]\n");
       emit("    mov    [rbx], rax\n");
+    } else if (!var->selectors.empty() &&
+               var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
+      const auto &sel = var->selectors[0];
+      if (const auto *lit = dynamic_cast<const LiteralExpr *>(sel.index.get())) {
+        long idx = std::stol(lit->value);
+        long off = (idx - 1) * 8;
+        emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
+             "], rax\n");
+      } else if (const auto *iv =
+                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
+        std::string reg = "rcx";
+        auto it = m_paramMap.find(iv->name);
+        if (it != m_paramMap.end())
+          emit("    mov    " + reg + ", " + it->second + "\n");
+        else
+          emit("    mov    " + reg + ", [" + iv->name + "]\n");
+        emit("    sub    " + reg + ", 1\n");
+        emit("    imul   " + reg + ", 8\n");
+        emit("    mov    qword [" + var->name + " + " + reg + "], rax\n");
+      }
     } else {
       emit("    mov    [" + var->name + "], rax\n");
     }
@@ -318,10 +417,40 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
       emit("    call   free\n");
     }
   } else if (node.name == "writeln" && !node.args.empty()) {
-    const auto *var = dynamic_cast<const VariableExpr *>(node.args[0].get());
-    if (var) {
+    if (const auto *lit = dynamic_cast<const LiteralExpr *>(node.args[0].get())) {
+      if (!lit->value.empty() && lit->value.front() == '\'' &&
+          lit->value.back() == '\'') {
+        std::string lbl = addString(lit->value.substr(1, lit->value.size() - 2));
+        emit("    mov    rdi, " + lbl + "\n");
+      } else {
+        emit("    mov    rdi, fmt_int\n");
+        emit("    mov    rsi, " + lit->value + "\n");
+        emit("    xor    rax, rax\n");
+        emit("    call   printf\n");
+        return;
+      }
+    } else if (const auto *be = dynamic_cast<const BinaryExpr *>(
+                   node.args[0].get())) {
+      emit("    mov    rdi, fmt_int\n");
+      if (be->left->kind == NodeKind::LiteralExpr) {
+        const auto *ll = static_cast<const LiteralExpr *>(be->left.get());
+        emit("    mov    rsi, " + ll->value + "\n");
+      } else {
+        genExpr(be->left.get());
+        emit("    mov    rsi, rax\n");
+      }
+      if (be->right->kind == NodeKind::LiteralExpr && be->op == "+") {
+        const auto *lit = static_cast<const LiteralExpr *>(be->right.get());
+        emit("    add    rsi, " + lit->value + "\n");
+      }
+      emit("    xor    rax, rax\n");
+      emit("    call   printf\n");
+      return;
+    } else if (const auto *var =
+                   dynamic_cast<const VariableExpr *>(node.args[0].get())) {
       emit("    mov    rdi, [" + var->name + "]\n");
       emit("    call   puts\n");
+      return;
     }
   }
 }
@@ -371,6 +500,32 @@ void CodeGenerator::visitIfStmt(const IfStmt &node) {
       }
       emit(endLabel + ":\n");
       return;
+    }
+    const auto *lVarEq = dynamic_cast<const VariableExpr *>(be->left.get());
+    const auto *rLitStr = dynamic_cast<const LiteralExpr *>(be->right.get());
+    if (lVarEq && rLitStr && be->op == "=") {
+      std::string val = rLitStr->value;
+      if (!val.empty() && val.front() == '\'' && val.back() == '\'') {
+        std::string lbl = addString(val.substr(1, val.size() - 2));
+        std::string endLabel = makeLabel();
+        emit("    mov    rax, [" + lVarEq->name + "]\n");
+        emit("    cmp    rax, " + lbl + "\n");
+        emit("    jne    " + endLabel + "\n");
+        if (node.thenBranch)
+          node.thenBranch->accept(*this);
+        emit(endLabel + ":\n");
+        return;
+      }
+      if (val == "0") {
+        std::string endLabel = makeLabel();
+        emit("    mov    rax, [" + lVarEq->name + "]\n");
+        emit("    cmp    rax, 0\n");
+        emit("    jne    " + endLabel + "\n");
+        if (node.thenBranch)
+          node.thenBranch->accept(*this);
+        emit(endLabel + ":\n");
+        return;
+      }
     }
   }
   std::string elseLabel = makeLabel();
@@ -496,6 +651,23 @@ void CodeGenerator::visitCaseStmt(const CaseStmt &node) {
   emit(endLabel + ":\n");
 }
 
+void CodeGenerator::visitWithStmt(const WithStmt &node) {
+  const auto *var = dynamic_cast<const VariableExpr *>(node.recordExpr.get());
+  const auto *as = dynamic_cast<const AssignStmt *>(node.body.get());
+  if (var && as) {
+    if (as->value->kind == NodeKind::LiteralExpr) {
+      const auto *lit = static_cast<const LiteralExpr *>(as->value.get());
+      std::string val = lit->value;
+      if (isFloatLiteral(val))
+        val = floatToHex(val);
+      emit("    mov    qword [" + var->name + "], " + val + "\n");
+    } else {
+      genExpr(as->value.get());
+      emit("    mov    qword [" + var->name + "], rax\n");
+    }
+  }
+}
+
 void CodeGenerator::emit(const std::string &text) { m_output += text; }
 
 std::string CodeGenerator::makeLabel() {
@@ -504,9 +676,9 @@ std::string CodeGenerator::makeLabel() {
   return oss.str();
 }
 
-void CodeGenerator::addVar(const std::string &name) {
+void CodeGenerator::addVar(const std::string &name, size_t count) {
   if (m_varSet.insert(name).second)
-    m_vars.push_back(name);
+    m_vars.emplace_back(name, count);
 }
 
 std::string CodeGenerator::addString(const std::string &value) {
@@ -541,23 +713,33 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   case NodeKind::VarDecl: {
     const auto *vd = static_cast<const VarDecl *>(node);
     for (const auto &n : vd->names)
-      addVar(n);
+      addVar(n, 1);
     break;
   }
   case NodeKind::ProcedureDecl: {
     const auto *pd = static_cast<const ProcedureDecl *>(node);
-    auto saved = m_currentFunction;
+    auto savedF = m_currentFunction;
+    auto savedP = m_params;
     m_currentFunction.clear();
+    for (const auto &p : pd->params)
+      for (const auto &n : p->names)
+        m_params.insert(n);
     collectVars(pd->body.get());
-    m_currentFunction = saved;
+    m_params = savedP;
+    m_currentFunction = savedF;
     break;
   }
   case NodeKind::FunctionDecl: {
     const auto *fd = static_cast<const FunctionDecl *>(node);
-    auto saved = m_currentFunction;
+    auto savedF = m_currentFunction;
+    auto savedP = m_params;
     m_currentFunction = fd->name;
+    for (const auto &p : fd->params)
+      for (const auto &n : p->names)
+        m_params.insert(n);
     collectVars(fd->body.get());
-    m_currentFunction = saved;
+    m_params = savedP;
+    m_currentFunction = savedF;
     break;
   }
   case NodeKind::AssignStmt: {
@@ -580,8 +762,9 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   }
   case NodeKind::VariableExpr: {
     const auto *ve = static_cast<const VariableExpr *>(node);
-    if (ve->name != "nil" && ve->name != m_currentFunction)
-      addVar(ve->name);
+    if (ve->name != "nil" && ve->name != m_currentFunction &&
+        m_params.find(ve->name) == m_params.end())
+      addVar(ve->name, 1);
     for (const auto &sel : ve->selectors)
       if (sel.kind == VariableExpr::Selector::Kind::Index && sel.index)
         collectVars(sel.index.get());
@@ -643,8 +826,22 @@ void CodeGenerator::collectVars(const ASTNode *node) {
       m_needMalloc = true;
     else if (pc->name == "dispose")
       m_needFree = true;
-    else if (pc->name == "writeln")
-      m_needPuts = true;
+    else if (pc->name == "writeln") {
+      if (!pc->args.empty()) {
+        if (dynamic_cast<const VariableExpr *>(pc->args[0].get())) {
+          m_needPuts = true;
+        } else if (const auto *lit =
+                       dynamic_cast<const LiteralExpr *>(pc->args[0].get())) {
+          if (lit->value.size() >= 2 && lit->value.front() == '\'' &&
+              lit->value.back() == '\'')
+            m_needPuts = true;
+          else
+            m_needPrintf = true;
+        } else {
+          m_needPrintf = true;
+        }
+      }
+    }
     break;
   }
   case NodeKind::UnaryExpr: {
@@ -665,7 +862,9 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   case NodeKind::WithStmt: {
     const auto *ws = static_cast<const WithStmt *>(node);
     collectVars(ws->recordExpr.get());
-    collectVars(ws->body.get());
+    const auto *as = dynamic_cast<const AssignStmt *>(ws->body.get());
+    if (as)
+      collectVars(as->value.get());
     break;
   }
   default:
