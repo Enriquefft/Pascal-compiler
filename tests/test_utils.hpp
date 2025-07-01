@@ -7,7 +7,6 @@
 #include <cctype>
 #include <gtest/gtest.h>
 #include <string_view>
-#include <utility>
 #include <vector>
 
 namespace test_utils {
@@ -21,7 +20,7 @@ using pascal::TokenType;
 
 enum class TestMode { Tokens, TokensAst, TokensAstAsm, All };
 
-inline constexpr TestMode TEST_MODE = TestMode::TokensAst;
+inline constexpr TestMode TEST_MODE = TestMode::All;
 
 inline std::string execute_stub(std::string_view /*asm_code*/) { return {}; }
 
@@ -133,11 +132,12 @@ inline void run_full(std::string_view src,
   EXPECT_EQ(output, expected_output);
 }
 
-inline void run_validation_fail(std::string_view src,
-                                const std::vector<Token> &expected_tokens,
-                                const pascal::AST &expected_ast,
-                                [[maybe_unused]] std::string_view expected_asm,
-                                [[maybe_unused]] std::string_view expected_output) {
+inline void
+run_validation_fail(std::string_view src,
+                    const std::vector<Token> &expected_tokens,
+                    const pascal::AST &expected_ast,
+                    [[maybe_unused]] std::string_view expected_asm,
+                    [[maybe_unused]] std::string_view expected_output) {
   Lexer lex(src);
   auto tokens = lex.scanTokens();
   ASSERT_EQ(tokens.size(), expected_tokens.size());
