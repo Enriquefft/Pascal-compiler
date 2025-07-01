@@ -534,7 +534,12 @@ TEST(UnsignedTests, Uns1) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "u:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("var u: unsigned;", expected_tokens, expected_ast, expected_asm,
            expected_output);
@@ -558,7 +563,13 @@ TEST(UnsignedTests, Uns2) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "u:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "    mov    qword [u], 1\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("u:=1;", expected_tokens, expected_ast, expected_asm,
            expected_output);
@@ -591,7 +602,21 @@ TEST(UnsignedTests, Uns3) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "u:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "L1:\n"
+                             "    mov    rax, [u]\n"
+                             "    cmp    rax, 0\n"
+                             "    jle    L2\n"
+                             "    mov    rax, [u]\n"
+                             "    sub    rax, 1\n"
+                             "    mov    [u], rax\n"
+                             "    jmp    L1\n"
+                             "L2:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("while u>0 do u:=u-1;", expected_tokens, expected_ast, expected_asm,
            expected_output);
@@ -631,7 +656,15 @@ TEST(UnsignedTests, Uns4) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n\n"
+                             "section .text\n"
+                             "global f\n"
+                             "f:\n"
+                             "    mov    rax, 0\n"
+                             "    ret\n"
+                             "global main\n"
+                             "main:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("function f: unsigned; begin f:=0; end;", expected_tokens,
            expected_ast, expected_asm, expected_output);
@@ -663,7 +696,21 @@ TEST(UnsignedTests, Uns5) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "u:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "    mov    qword [u], 1\n"
+                             "L1:\n"
+                             "    mov    rax, [u]\n"
+                             "    cmp    rax, 5\n"
+                             "    jg     L2\n"
+                             "    mov    [u], rax\n"
+                             "    add    qword [u], 1\n"
+                             "    jmp    L1\n"
+                             "L2:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("for u:=1 to 5 do u:=u;", expected_tokens, expected_ast,
            expected_asm, expected_output);
@@ -690,7 +737,12 @@ TEST(LongIntTests, Long1) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "l:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("var l: longint;", expected_tokens, expected_ast, expected_asm,
            expected_output);
@@ -714,7 +766,13 @@ TEST(LongIntTests, Long2) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "l:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "    mov    qword [l], 1\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("l:=1;", expected_tokens, expected_ast, expected_asm,
            expected_output);
@@ -747,7 +805,21 @@ TEST(LongIntTests, Long3) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "l:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "L1:\n"
+                             "    mov    rax, [l]\n"
+                             "    cmp    rax, 0\n"
+                             "    jle    L2\n"
+                             "    mov    rax, [l]\n"
+                             "    sub    rax, 1\n"
+                             "    mov    [l], rax\n"
+                             "    jmp    L1\n"
+                             "L2:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("while l>0 do l:=l-1;", expected_tokens, expected_ast, expected_asm,
            expected_output);
@@ -785,7 +857,15 @@ TEST(LongIntTests, Long4) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n\n"
+                             "section .text\n"
+                             "global f\n"
+                             "f:\n"
+                             "    mov    rax, 0\n"
+                             "    ret\n"
+                             "global main\n"
+                             "main:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("function f: longint; begin f:=0; end;", expected_tokens,
            expected_ast, expected_asm, expected_output);
@@ -817,7 +897,21 @@ TEST(LongIntTests, Long5) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text";
+  std::string expected_asm = "section .bss\n"
+                             "l:    resq    1\n\n"
+                             "section .text\n"
+                             "global main\n"
+                             "main:\n"
+                             "    mov    qword [l], 1\n"
+                             "L1:\n"
+                             "    mov    rax, [l]\n"
+                             "    cmp    rax, 5\n"
+                             "    jg     L2\n"
+                             "    mov    [l], rax\n"
+                             "    add    qword [l], 1\n"
+                             "    jmp    L1\n"
+                             "L2:\n"
+                             "    ret\n";
   std::string expected_output = "";
   run_full("for l:=1 to 5 do l:=l;", expected_tokens, expected_ast,
            expected_asm, expected_output);
@@ -855,12 +949,13 @@ TEST(FunctionTests, Func1) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text\n"
+  std::string expected_asm = "section .bss\n\n"
+                             "section .text\n"
                              "global f\n"
-                             "global main\n"
                              "f:\n"
                              "    mov    rax, 0\n"
                              "    ret\n"
+                             "global main\n"
                              "main:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
@@ -889,63 +984,75 @@ TEST(FunctionTests, Func2) {
       std::make_unique<pascal::Program>("test", std::move(block));
   expected_ast.valid = true;
 
-  std::string expected_asm = "section .text\n"
+  std::string expected_asm = "section .bss\n\n"
+                             "section .text\n"
                              "global p\n"
-                             "global main\n"
                              "p:\n"
                              "    ret\n"
+                             "global main\n"
                              "main:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
 
 TEST(FunctionTests, Func3) {
-  std::string input_str = "function g(x: integer): integer; begin g:=x;
-      end;
-  "; std::vector<Token> expected_tokens = {{TT::Function, " function "},
-      {TT::Identifier, "g"},
-      {TT::LeftParen, "("}, {TT::Identifier, "x"}, {TT::Colon, ":"},
-      {TT::Identifier, "integer"}, {TT::RightParen, ")"}, {TT::Colon, ":"},
-      {TT::Identifier, "integer"}, {TT::Semicolon, ";"}, {TT::Begin, "begin"},
-      {TT::Identifier, "g"}, {TT::Colon, ":"}, {TT::Assign, "="},
-      {TT::Identifier, "x"}, {TT::Semicolon, ";"}, {TT::End, "end"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}
-};
-AST expected_ast{};
+  std::string input_str = "function g(x: integer): integer; begin g:=x; end;";
+  std::vector<Token> expected_tokens = {{TT::Function, "function"},
+                                        {TT::Identifier, "g"},
+                                        {TT::LeftParen, "("},
+                                        {TT::Identifier, "x"},
+                                        {TT::Colon, ":"},
+                                        {TT::Identifier, "integer"},
+                                        {TT::RightParen, ")"},
+                                        {TT::Colon, ":"},
+                                        {TT::Identifier, "integer"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Begin, "begin"},
+                                        {TT::Identifier, "g"},
+                                        {TT::Colon, ":"},
+                                        {TT::Assign, "="},
+                                        {TT::Identifier, "x"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::End, "end"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::EndOfFile, ""}};
+  AST expected_ast{};
 
-std::vector<std::unique_ptr<pascal::Declaration>> decls;
-std::vector<std::unique_ptr<pascal::ParamDecl>> params;
-params.emplace_back(std::make_unique<pascal::ParamDecl>(
-    std::vector<std::string>{"x"},
-    std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
-                                             "integer")));
-std::vector<std::unique_ptr<pascal::Statement>> fn_stmts;
-fn_stmts.emplace_back(std::make_unique<pascal::AssignStmt>(
-    std::make_unique<pascal::VariableExpr>("g"),
-    std::make_unique<pascal::VariableExpr>("x")));
-auto fn_block = std::make_unique<pascal::Block>(
-    std::vector<std::unique_ptr<pascal::Declaration>>{}, std::move(fn_stmts));
-decls.emplace_back(std::make_unique<pascal::FunctionDecl>(
-    "g", std::move(params),
-    std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
-                                             "integer"),
-    std::move(fn_block)));
+  std::vector<std::unique_ptr<pascal::Declaration>> decls;
+  std::vector<std::unique_ptr<pascal::ParamDecl>> params;
+  params.emplace_back(std::make_unique<pascal::ParamDecl>(
+      std::vector<std::string>{"x"},
+      std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
+                                               "integer")));
+  std::vector<std::unique_ptr<pascal::Statement>> fn_stmts;
+  fn_stmts.emplace_back(std::make_unique<pascal::AssignStmt>(
+      std::make_unique<pascal::VariableExpr>("g"),
+      std::make_unique<pascal::VariableExpr>("x")));
+  auto fn_block = std::make_unique<pascal::Block>(
+      std::vector<std::unique_ptr<pascal::Declaration>>{}, std::move(fn_stmts));
+  decls.emplace_back(std::make_unique<pascal::FunctionDecl>(
+      "g", std::move(params),
+      std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
+                                               "integer"),
+      std::move(fn_block)));
 
-std::vector<std::unique_ptr<pascal::Statement>> stmts;
-auto block =
-    std::make_unique<pascal::Block>(std::move(decls), std::move(stmts));
-expected_ast.root = std::make_unique<pascal::Program>("test", std::move(block));
-expected_ast.valid = true;
+  std::vector<std::unique_ptr<pascal::Statement>> stmts;
+  auto block =
+      std::make_unique<pascal::Block>(std::move(decls), std::move(stmts));
+  expected_ast.root =
+      std::make_unique<pascal::Program>("test", std::move(block));
+  expected_ast.valid = true;
 
-std::string expected_asm = "section .text\n"
-                           "global g\n"
-                           "global main\n"
-                           "g:\n"
-                           "    mov    rax, rdi\n"
-                           "    ret\n"
-                           "main:\n"
-                           "    ret\n";
-run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
+  std::string expected_asm = "section .bss\n\n"
+                             "section .text\n"
+                             "global g\n"
+                             "g:\n"
+                             "    mov    rax, rdi\n"
+                             "    ret\n"
+                             "global main\n"
+                             "main:\n"
+                             "    ret\n";
+  run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
 
 // Float
