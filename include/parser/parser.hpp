@@ -25,6 +25,7 @@ private:
   std::unique_ptr<Statement> parseStatement();
   std::unique_ptr<Expression> parseExpression();
   std::unique_ptr<TypeSpec> parseTypeSpec();
+  std::unique_ptr<VariableExpr> parseVariable(std::string name);
 
   std::unique_ptr<Program> parseProgram();
 

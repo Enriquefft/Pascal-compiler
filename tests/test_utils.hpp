@@ -140,4 +140,27 @@ inline void run_full(std::string_view src,
   EXPECT_EQ(output, expected_output);
 }
 
+inline void run_validation_fail(std::string_view src,
+                                const std::vector<Token> &expected_tokens,
+                                const pascal::AST &expected_ast,
+                                std::string_view expected_asm,
+                                std::string_view expected_output) {
+  Lexer lex(src);
+  auto tokens = lex.scanTokens();
+  ASSERT_EQ(tokens.size(), expected_tokens.size());
+
+  for (size_t i = 0; i < expected_tokens.size(); ++i) {
+    EXPECT_EQ(tokens[i].type, expected_tokens[i].type);
+    EXPECT_EQ(tokens[i].lexeme, expected_tokens[i].lexeme);
+  }
+
+  Parser parser(tokens);
+  AST ast{};
+  EXPECT_NO_THROW({ ast = parser.parse(); });
+  EXPECT_TRUE(ast_equal(ast, expected_ast));
+
+  ASTValidator validator;
+  EXPECT_FALSE(validator.validate(ast));
+}
+
 } // namespace test_utils
