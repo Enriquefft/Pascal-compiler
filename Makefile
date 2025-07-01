@@ -31,7 +31,7 @@ SRC = $(filter-out src/api.cpp,$(SRC_ALL))
 
 API_SRC = $(filter-out src/main.cpp,$(SRC_ALL))
 
-SRC_TEST = $(filter-out src/main.cpp,$(SRC_ALL))
+SRC_TEST = $(filter-out src/main.cpp src/api.cpp,$(SRC_ALL))
 TEST_SRC = $(wildcard tests/*.cpp)
 BUILD_DIR = build
 TARGET = $(BUILD_DIR)/compiler

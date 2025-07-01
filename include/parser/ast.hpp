@@ -110,6 +110,10 @@ public:
 };
 
 struct ASTNode {
+  ASTNode(const ASTNode &) = default;
+  ASTNode(ASTNode &&) = delete;
+  ASTNode &operator=(const ASTNode &) = default;
+  ASTNode &operator=(ASTNode &&) = delete;
   explicit ASTNode(NodeKind k) : kind(k) {}
   virtual ~ASTNode() = default;
   virtual void accept(NodeVisitor &v) const = 0;
@@ -410,6 +414,10 @@ struct Range : ASTNode {
   int end{0};
 
   Range() : ASTNode(NodeKind::Range) {}
+  Range(const Range &) = default;
+  Range(Range &&) = default;
+  Range &operator=(const Range &) = default;
+  Range &operator=(Range &&) = default;
   Range(int s, int e) : ASTNode(NodeKind::Range), start(s), end(e) {}
 
   void accept(NodeVisitor &v) const override { v.visitRange(*this); }
