@@ -7,8 +7,6 @@
 
 namespace pascal {
 
-struct AST;
-
 class CodeGenerator : public NodeVisitor {
 public:
   [[nodiscard]] std::string generate(const AST &ast);

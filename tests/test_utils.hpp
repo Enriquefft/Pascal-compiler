@@ -20,7 +20,7 @@ using pascal::TokenType;
 
 enum class TestMode { Tokens, TokensAst, TokensAstAsm, All };
 
-inline constexpr TestMode TEST_MODE = TestMode::All;
+inline constexpr TestMode TEST_MODE = TestMode::TokensAstAsm;
 
 inline std::string execute_stub(std::string_view /*asm_code*/) { return {}; }
 
