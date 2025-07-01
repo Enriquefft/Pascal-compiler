@@ -103,13 +103,6 @@ inline void run_full(std::string_view src,
   auto tokens = lex.scanTokens();
   ASSERT_EQ(tokens.size(), expected_tokens.size());
 
-  std::cout << "Tokens:\n";
-  for (const auto &token : tokens) {
-    std::cout << "Type: " << static_cast<int>(token.type) << ", Lexeme: '"
-              << token.lexeme << "'\n";
-    std::cout << "Line: " << token.line << ", Column: " << token.column << "\n";
-  }
-
   for (size_t i = 0; i < expected_tokens.size(); ++i) {
     EXPECT_EQ(tokens[i].type, expected_tokens[i].type);
     EXPECT_EQ(tokens[i].lexeme, expected_tokens[i].lexeme);
