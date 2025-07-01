@@ -887,6 +887,42 @@ void CodeGenerator::collectVars(const ASTNode *node) {
       collectVars(as->value.get());
     break;
   }
+  case NodeKind::ConstDecl: {
+    const auto *cd = static_cast<const ConstDecl *>(node);
+    collectVars(cd->value.get());
+    break;
+  }
+  case NodeKind::TypeDecl: {
+    const auto *td = static_cast<const TypeDecl *>(node);
+    collectVars(td->type.get());
+    break;
+  }
+  case NodeKind::ParamDecl: {
+    const auto *pd = static_cast<const ParamDecl *>(node);
+    collectVars(pd->type.get());
+    break;
+  }
+  case NodeKind::RecordTypeSpec: {
+    const auto *rt = static_cast<const RecordTypeSpec *>(node);
+    for (const auto &f : rt->fields)
+      collectVars(f.get());
+    break;
+  }
+  case NodeKind::PointerTypeSpec: {
+    const auto *pt = static_cast<const PointerTypeSpec *>(node);
+    collectVars(pt->refType.get());
+    break;
+  }
+  case NodeKind::ArrayTypeSpec: {
+    const auto *at = static_cast<const ArrayTypeSpec *>(node);
+    collectVars(at->elementType.get());
+    break;
+  }
+  case NodeKind::SimpleTypeSpec:
+  case NodeKind::TypeSpec:
+  case NodeKind::Range:
+  case NodeKind::IdentifierList:
+    break;
   default:
     break;
   }
