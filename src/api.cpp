@@ -1,5 +1,6 @@
 #include <crow/app.h>
 #include <crow/common.h>
+#include <crow/middlewares/cors.h>
 
 #include "executor/executor.hpp"
 #include "parser/parser.hpp"
@@ -137,7 +138,11 @@ std::string tokenTypeToString(pascal::TokenType type) {
 } // namespace
 
 auto main(int /*argc*/, char* /*argv*/[]) -> int {
-  crow::SimpleApp app;
+  crow::App<crow::CORSHandler> app;
+  auto& cors = app.get_middleware<crow::CORSHandler>();
+  cors.global()
+      .methods("GET"_method, "POST"_method, "OPTIONS"_method)
+      .headers("Content-Type");
 
   // Health check endpoint used by CI or clients.
   CROW_ROUTE(app, "/health")([] { return "Hello world"; });
