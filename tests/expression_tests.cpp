@@ -1,11 +1,14 @@
 #include "test_common.hpp"
 
 TEST(ExpressionTests, Expr1) {
-  std::string input_str = "begin a := 1; end.";
+  std::string input_str = "program test; begin a := 1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Begin, "begin"}, {TT::Identifier, "a"}, {TT::Colon, ":"},
-      {TT::Assign, "="},    {TT::Number, "1"},     {TT::Semicolon, ";"},
-      {TT::End, "end"},     {TT::Dot, "."},        {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::Identifier, "a"},   {TT::Colon, ":"},
+      {TT::Assign, "="},       {TT::Number, "1"},
+      {TT::Semicolon, ";"},    {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -37,12 +40,15 @@ TEST(ExpressionTests, Expr1) {
 }
 
 TEST(ExpressionTests, Expr2) {
-  std::string input_str = "begin b := a + 1; end.";
+  std::string input_str = "program test; begin b := a + 1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Begin, "begin"}, {TT::Identifier, "b"}, {TT::Colon, ":"},
-      {TT::Assign, "="},    {TT::Identifier, "a"}, {TT::Plus, "+"},
-      {TT::Number, "1"},    {TT::Semicolon, ";"},  {TT::End, "end"},
-      {TT::Dot, "."},       {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::Identifier, "b"},   {TT::Colon, ":"},
+      {TT::Assign, "="},       {TT::Identifier, "a"},
+      {TT::Plus, "+"},         {TT::Number, "1"},
+      {TT::Semicolon, ";"},    {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -79,12 +85,15 @@ TEST(ExpressionTests, Expr2) {
 }
 
 TEST(ExpressionTests, Expr3) {
-  std::string input_str = "begin c := b * 2; end.";
+  std::string input_str = "program test; begin c := b * 2; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Begin, "begin"}, {TT::Identifier, "c"}, {TT::Colon, ":"},
-      {TT::Assign, "="},    {TT::Identifier, "b"}, {TT::Star, "*"},
-      {TT::Number, "2"},    {TT::Semicolon, ";"},  {TT::End, "end"},
-      {TT::Dot, "."},       {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::Identifier, "c"},   {TT::Colon, ":"},
+      {TT::Assign, "="},       {TT::Identifier, "b"},
+      {TT::Star, "*"},         {TT::Number, "2"},
+      {TT::Semicolon, ";"},    {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
