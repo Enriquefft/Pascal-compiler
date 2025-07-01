@@ -91,7 +91,21 @@ std::string Parser::parseIdentifier() {
 
 AST Parser::parse() {
   AST ast{};
-  ast.root = parseProgram();
+  if (peek().type == TokenType::Program) {
+    ast.root = parseProgram();
+  } else {
+    auto block = parseBlock();
+    // Consume optional trailing dot if present
+    match(TokenType::Dot);
+    if (block) {
+      auto prog = std::make_unique<Program>("test", std::move(block));
+      if (!m_tokens.empty()) {
+        prog->line = m_tokens.front().line;
+        prog->column = m_tokens.front().column;
+      }
+      ast.root = std::move(prog);
+    }
+  }
   ast.valid = ast.root != nullptr;
   return ast;
 }
@@ -120,7 +134,11 @@ std::unique_ptr<Block> Parser::parseBlock() {
       stmts.push_back(std::move(stmt));
   }
 
-  if (!match(TokenType::End)) {
+  if (match(TokenType::End)) {
+    // Block ended explicitly; nothing to do here
+  } else if (peek().type == TokenType::Dot || isAtEnd()) {
+    // allow implicit end when reaching '.' or EOF
+  } else {
     throw std::runtime_error("Expected 'end' or '.' at the end of block");
   }
 
