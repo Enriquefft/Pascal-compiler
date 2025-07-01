@@ -1,5 +1,5 @@
 #include "parser/parser.hpp"
-#include <cstdlib>
+#include <string>
 
 namespace pascal {
 
@@ -363,12 +363,12 @@ std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
     std::vector<Range> ranges;
     if (match(TokenType::LeftBracket)) {
       if (match(TokenType::Number)) {
-        int start = std::atoi(m_tokens[m_current - 1].lexeme.c_str());
+        int start = std::stoi(m_tokens[m_current - 1].lexeme);
         match(TokenType::Dot);
         match(TokenType::Dot);
         int end = 0;
         if (match(TokenType::Number))
-          end = std::atoi(m_tokens[m_current - 1].lexeme.c_str());
+          end = std::stoi(m_tokens[m_current - 1].lexeme);
         ranges.emplace_back(start, end);
       }
       match(TokenType::RightBracket);

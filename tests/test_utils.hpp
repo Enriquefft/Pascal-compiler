@@ -136,8 +136,8 @@ inline void run_full(std::string_view src,
 inline void run_validation_fail(std::string_view src,
                                 const std::vector<Token> &expected_tokens,
                                 const pascal::AST &expected_ast,
-                                std::string_view expected_asm,
-                                std::string_view expected_output) {
+                                [[maybe_unused]] std::string_view expected_asm,
+                                [[maybe_unused]] std::string_view expected_output) {
   Lexer lex(src);
   auto tokens = lex.scanTokens();
   ASSERT_EQ(tokens.size(), expected_tokens.size());

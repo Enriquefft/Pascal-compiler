@@ -76,7 +76,7 @@ struct DisposeExpr;
 
 class NodeVisitor {
 public:
-  virtual ~NodeVisitor() = default;
+  virtual ~NodeVisitor();
   virtual void visitProgram(const Program &) = 0;
   virtual void visitBlock(const Block &) = 0;
   virtual void visitVarDecl(const VarDecl &) = 0;
@@ -115,7 +115,7 @@ struct ASTNode {
   ASTNode &operator=(const ASTNode &) = default;
   ASTNode &operator=(ASTNode &&) = delete;
   explicit ASTNode(NodeKind k) : kind(k) {}
-  virtual ~ASTNode() = default;
+  virtual ~ASTNode();
   virtual void accept(NodeVisitor &v) const = 0;
 
   NodeKind kind;
@@ -123,24 +123,27 @@ struct ASTNode {
 
 struct Expression : ASTNode {
   using ASTNode::ASTNode;
+  ~Expression() override;
 };
 
 struct Statement : ASTNode {
   using ASTNode::ASTNode;
+  ~Statement() override;
 };
 
 struct Declaration : ASTNode {
   using ASTNode::ASTNode;
+  ~Declaration() override;
 };
 
 struct Program : ASTNode {
   std::string name;
-  std::unique_ptr<class Block> block;
+  std::unique_ptr<Block> block;
 
   Program();
   Program(std::string n, std::unique_ptr<Block> b);
 
-  ~Program();
+  ~Program() override;
 
   void accept(NodeVisitor &v) const override { v.visitProgram(*this); }
 };
@@ -155,6 +158,8 @@ struct Block : ASTNode {
       : ASTNode(NodeKind::Block), declarations(std::move(decls)),
         statements(std::move(stmts)) {}
 
+  ~Block() override;
+
   void accept(NodeVisitor &v) const override { v.visitBlock(*this); }
 };
 
@@ -165,7 +170,7 @@ struct VarDecl : Declaration {
   VarDecl();
   VarDecl(std::vector<std::string> n, std::unique_ptr<TypeSpec> t);
 
-  ~VarDecl();
+  ~VarDecl() override;
 
   void accept(NodeVisitor &v) const override { v.visitVarDecl(*this); }
 };
@@ -179,6 +184,8 @@ struct ConstDecl : Declaration {
       : Declaration(NodeKind::ConstDecl), name(std::move(n)),
         value(std::move(v)) {}
 
+  ~ConstDecl() override;
+
   void accept(NodeVisitor &v) const override { v.visitConstDecl(*this); }
 };
 
@@ -189,7 +196,7 @@ struct TypeDecl : Declaration {
   TypeDecl();
   TypeDecl(std::string n, std::unique_ptr<TypeSpec> t);
 
-  ~TypeDecl();
+  ~TypeDecl() override;
 
   void accept(NodeVisitor &v) const override { v.visitTypeDecl(*this); }
 };
@@ -203,7 +210,7 @@ struct ProcedureDecl : Declaration {
   ProcedureDecl(std::string n, std::vector<std::unique_ptr<ParamDecl>> p,
                 std::unique_ptr<Block> b);
 
-  ~ProcedureDecl();
+  ~ProcedureDecl() override;
 
   void accept(NodeVisitor &v) const override { v.visitProcedureDecl(*this); }
 };
@@ -215,7 +222,7 @@ struct ParamDecl : Declaration {
   ParamDecl();
   ParamDecl(std::vector<std::string> n, std::unique_ptr<TypeSpec> t);
 
-  ~ParamDecl();
+  ~ParamDecl() override;
 
   void accept(NodeVisitor &v) const override { v.visitParamDecl(*this); }
 };
@@ -230,7 +237,7 @@ struct FunctionDecl : Declaration {
   FunctionDecl(std::string n, std::vector<std::unique_ptr<ParamDecl>> p,
                std::unique_ptr<TypeSpec> r, std::unique_ptr<Block> b);
 
-  ~FunctionDecl();
+  ~FunctionDecl() override;
 
   void accept(NodeVisitor &v) const override { v.visitFunctionDecl(*this); }
 };
@@ -241,6 +248,8 @@ struct CompoundStmt : Statement {
   CompoundStmt() : Statement(NodeKind::CompoundStmt) {}
   explicit CompoundStmt(std::vector<std::unique_ptr<Statement>> stmts)
       : Statement(NodeKind::CompoundStmt), statements(std::move(stmts)) {}
+
+  ~CompoundStmt() override;
 
   void accept(NodeVisitor &v) const override { v.visitCompoundStmt(*this); }
 };
@@ -254,6 +263,8 @@ struct AssignStmt : Statement {
       : Statement(NodeKind::AssignStmt), target(std::move(t)),
         value(std::move(v)) {}
 
+  ~AssignStmt() override;
+
   void accept(NodeVisitor &v) const override { v.visitAssignStmt(*this); }
 };
 
@@ -264,6 +275,8 @@ struct ProcCall : Statement {
   ProcCall() : Statement(NodeKind::ProcCall) {}
   ProcCall(std::string n, std::vector<std::unique_ptr<Expression>> a)
       : Statement(NodeKind::ProcCall), name(std::move(n)), args(std::move(a)) {}
+
+  ~ProcCall() override;
 
   void accept(NodeVisitor &v) const override { v.visitProcCall(*this); }
 };
@@ -279,6 +292,8 @@ struct IfStmt : Statement {
       : Statement(NodeKind::IfStmt), condition(std::move(cond)),
         thenBranch(std::move(thenB)), elseBranch(std::move(elseB)) {}
 
+  ~IfStmt() override;
+
   void accept(NodeVisitor &v) const override { v.visitIfStmt(*this); }
 };
 
@@ -290,6 +305,8 @@ struct WhileStmt : Statement {
   WhileStmt(std::unique_ptr<Expression> cond, std::unique_ptr<Statement> b)
       : Statement(NodeKind::WhileStmt), condition(std::move(cond)),
         body(std::move(b)) {}
+
+  ~WhileStmt() override;
 
   void accept(NodeVisitor &v) const override { v.visitWhileStmt(*this); }
 };
@@ -306,6 +323,8 @@ struct ForStmt : Statement {
       : Statement(NodeKind::ForStmt), init(std::move(i)), downto(d),
         limit(std::move(l)), body(std::move(b)) {}
 
+  ~ForStmt() override;
+
   void accept(NodeVisitor &v) const override { v.visitForStmt(*this); }
 };
 
@@ -319,6 +338,8 @@ struct RepeatStmt : Statement {
       : Statement(NodeKind::RepeatStmt), body(std::move(b)),
         condition(std::move(cond)) {}
 
+  ~RepeatStmt() override;
+
   void accept(NodeVisitor &v) const override { v.visitRepeatStmt(*this); }
 };
 
@@ -330,7 +351,7 @@ struct CaseStmt : Statement {
   CaseStmt(std::unique_ptr<Expression> e,
            std::vector<std::unique_ptr<CaseLabel>> c);
 
-  ~CaseStmt();
+  ~CaseStmt() override;
 
   void accept(NodeVisitor &v) const override { v.visitCaseStmt(*this); }
 };
@@ -343,6 +364,8 @@ struct WithStmt : Statement {
   WithStmt(std::unique_ptr<Expression> expr, std::unique_ptr<Statement> b)
       : Statement(NodeKind::WithStmt), recordExpr(std::move(expr)),
         body(std::move(b)) {}
+
+  ~WithStmt() override;
 
   void accept(NodeVisitor &v) const override { v.visitWithStmt(*this); }
 };
@@ -358,6 +381,8 @@ struct BinaryExpr : Expression {
       : Expression(NodeKind::BinaryExpr), left(std::move(l)),
         right(std::move(r)), op(std::move(o)) {}
 
+  ~BinaryExpr() override;
+
   void accept(NodeVisitor &v) const override { v.visitBinaryExpr(*this); }
 };
 
@@ -370,6 +395,8 @@ struct UnaryExpr : Expression {
       : Expression(NodeKind::UnaryExpr), operand(std::move(oper)),
         op(std::move(o)) {}
 
+  ~UnaryExpr() override;
+
   void accept(NodeVisitor &v) const override { v.visitUnaryExpr(*this); }
 };
 
@@ -379,6 +406,8 @@ struct LiteralExpr : Expression {
   LiteralExpr() : Expression(NodeKind::LiteralExpr) {}
   explicit LiteralExpr(std::string val)
       : Expression(NodeKind::LiteralExpr), value(std::move(val)) {}
+
+  ~LiteralExpr() override;
 
   void accept(NodeVisitor &v) const override { v.visitLiteralExpr(*this); }
 };
@@ -406,6 +435,8 @@ struct VariableExpr : Expression {
       : Expression(NodeKind::VariableExpr), name(std::move(n)),
         selectors(std::move(sels)) {}
 
+  ~VariableExpr() override;
+
   void accept(NodeVisitor &v) const override { v.visitVariableExpr(*this); }
 };
 
@@ -415,16 +446,19 @@ struct Range : ASTNode {
 
   Range() : ASTNode(NodeKind::Range) {}
   Range(const Range &) = default;
-  Range(Range &&) = default;
+  Range(Range &&) = delete;
   Range &operator=(const Range &) = default;
-  Range &operator=(Range &&) = default;
+  Range &operator=(Range &&) = delete;
   Range(int s, int e) : ASTNode(NodeKind::Range), start(s), end(e) {}
+
+  ~Range() override;
 
   void accept(NodeVisitor &v) const override { v.visitRange(*this); }
 };
 
 struct TypeSpec : ASTNode {
   using ASTNode::ASTNode;
+  ~TypeSpec() override;
 };
 
 struct SimpleTypeSpec : TypeSpec {
@@ -434,6 +468,8 @@ struct SimpleTypeSpec : TypeSpec {
   SimpleTypeSpec() : TypeSpec(NodeKind::SimpleTypeSpec) {}
   SimpleTypeSpec(BasicType b, std::string n = {})
       : TypeSpec(NodeKind::SimpleTypeSpec), basic(b), name(std::move(n)) {}
+
+  ~SimpleTypeSpec() override;
 
   void accept(NodeVisitor &v) const override { v.visitSimpleTypeSpec(*this); }
 };
@@ -445,7 +481,7 @@ struct ArrayTypeSpec : TypeSpec {
   ArrayTypeSpec();
   ArrayTypeSpec(std::vector<Range> r, std::unique_ptr<TypeSpec> elem);
 
-  ~ArrayTypeSpec();
+  ~ArrayTypeSpec() override;
 
   void accept(NodeVisitor &v) const override { v.visitArrayTypeSpec(*this); }
 };
@@ -457,6 +493,8 @@ struct RecordTypeSpec : TypeSpec {
   explicit RecordTypeSpec(std::vector<std::unique_ptr<VarDecl>> f)
       : TypeSpec(NodeKind::RecordTypeSpec), fields(std::move(f)) {}
 
+  ~RecordTypeSpec() override;
+
   void accept(NodeVisitor &v) const override { v.visitRecordTypeSpec(*this); }
 };
 
@@ -466,7 +504,7 @@ struct PointerTypeSpec : TypeSpec {
   PointerTypeSpec();
   explicit PointerTypeSpec(std::unique_ptr<TypeSpec> r);
 
-  ~PointerTypeSpec();
+  ~PointerTypeSpec() override;
 
   void accept(NodeVisitor &v) const override { v.visitPointerTypeSpec(*this); }
 };
@@ -481,6 +519,8 @@ struct CaseLabel : ASTNode {
       : ASTNode(NodeKind::CaseLabel), constants(std::move(c)),
         stmt(std::move(s)) {}
 
+  ~CaseLabel() override;
+
   void accept(NodeVisitor &v) const override { v.visitCaseLabel(*this); }
 };
 
@@ -491,6 +531,8 @@ struct NewExpr : Expression {
   explicit NewExpr(std::unique_ptr<VariableExpr> var)
       : Expression(NodeKind::NewExpr), variable(std::move(var)) {}
 
+  ~NewExpr() override;
+
   void accept(NodeVisitor &v) const override { v.visitNewExpr(*this); }
 };
 
@@ -500,6 +542,8 @@ struct DisposeExpr : Expression {
   DisposeExpr() : Expression(NodeKind::DisposeExpr) {}
   explicit DisposeExpr(std::unique_ptr<VariableExpr> var)
       : Expression(NodeKind::DisposeExpr), variable(std::move(var)) {}
+
+  ~DisposeExpr() override;
 
   void accept(NodeVisitor &v) const override { v.visitDisposeExpr(*this); }
 };
@@ -512,17 +556,14 @@ struct AST {
 inline Program::Program() : ASTNode(NodeKind::Program) {}
 inline Program::Program(std::string n, std::unique_ptr<Block> b)
     : ASTNode(NodeKind::Program), name(std::move(n)), block(std::move(b)) {}
-inline Program::~Program() = default;
 
 inline VarDecl::VarDecl() : Declaration(NodeKind::VarDecl) {}
 inline VarDecl::VarDecl(std::vector<std::string> n, std::unique_ptr<TypeSpec> t)
     : Declaration(NodeKind::VarDecl), names(std::move(n)), type(std::move(t)) {}
-inline VarDecl::~VarDecl() = default;
 
 inline TypeDecl::TypeDecl() : Declaration(NodeKind::TypeDecl) {}
 inline TypeDecl::TypeDecl(std::string n, std::unique_ptr<TypeSpec> t)
     : Declaration(NodeKind::TypeDecl), name(std::move(n)), type(std::move(t)) {}
-inline TypeDecl::~TypeDecl() = default;
 
 inline ProcedureDecl::ProcedureDecl() : Declaration(NodeKind::ProcedureDecl) {}
 inline ProcedureDecl::ProcedureDecl(std::string n,
@@ -530,14 +571,12 @@ inline ProcedureDecl::ProcedureDecl(std::string n,
                                     std::unique_ptr<Block> b)
     : Declaration(NodeKind::ProcedureDecl), name(std::move(n)),
       params(std::move(p)), body(std::move(b)) {}
-inline ProcedureDecl::~ProcedureDecl() = default;
 
 inline ParamDecl::ParamDecl() : Declaration(NodeKind::ParamDecl) {}
 inline ParamDecl::ParamDecl(std::vector<std::string> n,
                             std::unique_ptr<TypeSpec> t)
     : Declaration(NodeKind::ParamDecl), names(std::move(n)),
       type(std::move(t)) {}
-inline ParamDecl::~ParamDecl() = default;
 
 inline FunctionDecl::FunctionDecl() : Declaration(NodeKind::FunctionDecl) {}
 inline FunctionDecl::FunctionDecl(std::string n,
@@ -546,25 +585,21 @@ inline FunctionDecl::FunctionDecl(std::string n,
                                   std::unique_ptr<Block> b)
     : Declaration(NodeKind::FunctionDecl), name(std::move(n)),
       params(std::move(p)), returnType(std::move(r)), body(std::move(b)) {}
-inline FunctionDecl::~FunctionDecl() = default;
 
 inline ArrayTypeSpec::ArrayTypeSpec() : TypeSpec(NodeKind::ArrayTypeSpec) {}
 inline ArrayTypeSpec::ArrayTypeSpec(std::vector<Range> r,
                                     std::unique_ptr<TypeSpec> elem)
     : TypeSpec(NodeKind::ArrayTypeSpec), ranges(std::move(r)),
       elementType(std::move(elem)) {}
-inline ArrayTypeSpec::~ArrayTypeSpec() = default;
 
 inline PointerTypeSpec::PointerTypeSpec()
     : TypeSpec(NodeKind::PointerTypeSpec) {}
 inline PointerTypeSpec::PointerTypeSpec(std::unique_ptr<TypeSpec> r)
     : TypeSpec(NodeKind::PointerTypeSpec), refType(std::move(r)) {}
-inline PointerTypeSpec::~PointerTypeSpec() = default;
 inline CaseStmt::CaseStmt() : Statement(NodeKind::CaseStmt) {}
 inline CaseStmt::CaseStmt(std::unique_ptr<Expression> e,
                           std::vector<std::unique_ptr<CaseLabel>> c)
     : Statement(NodeKind::CaseStmt), expr(std::move(e)), cases(std::move(c)) {}
-inline CaseStmt::~CaseStmt() = default;
 
 } // namespace pascal
 
