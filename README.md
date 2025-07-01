@@ -17,6 +17,24 @@ make clean  # removes build artefacts
 
 The resulting binary is placed in `build/compiler`.
 
+## Docker
+
+A `Dockerfile` is provided to build and run the API version of the compiler.
+Build the image with:
+
+```bash
+docker build -t pascal-api .
+```
+
+Then run the container exposing port 443:
+
+```bash
+docker run -p 443:443 pascal-api
+```
+
+The API serves the `/compile` endpoint which returns a JSON object matching the
+`CompilationResult` interface described in the project documentation.
+
 ## Using the Compiler
 
 Once built, invoke the compiler with a Pascal source file:
