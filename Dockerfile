@@ -14,6 +14,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Crow (header-only library)
+
+RUN sudo apt-get install --reinstall ca-certificates
+RUN git config --global http.sslverify false
+
 RUN git clone https://github.com/CrowCpp/Crow.git /tmp/crow \
     && cp -r /tmp/crow/include/crow /usr/local/include/ \
     && rm -rf /tmp/crow
