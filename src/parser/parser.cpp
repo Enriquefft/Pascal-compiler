@@ -25,7 +25,12 @@ bool Parser::isAtEnd() const { return peek().type == TokenType::EndOfFile; }
 
 std::unique_ptr<Program> Parser::parseProgram() {
   auto block = parseBlock();
-  return std::make_unique<Program>("test", std::move(block));
+  auto prog = std::make_unique<Program>("test", std::move(block));
+  if (!m_tokens.empty()) {
+    prog->line = m_tokens.front().line;
+    prog->column = m_tokens.front().column;
+  }
+  return prog;
 }
 
 AST Parser::parse() {
@@ -38,6 +43,8 @@ AST Parser::parse() {
 std::unique_ptr<Block> Parser::parseBlock() {
   std::vector<std::unique_ptr<Declaration>> decls;
   std::vector<std::unique_ptr<Statement>> stmts;
+  std::size_t startLine = peek().line;
+  std::size_t startCol = peek().column;
 
   while (!isAtEnd()) {
     if (peek().type == TokenType::Var || peek().type == TokenType::Function ||
@@ -61,11 +68,15 @@ std::unique_ptr<Block> Parser::parseBlock() {
     match(TokenType::Dot);
   }
 
-  return std::make_unique<Block>(std::move(decls), std::move(stmts));
+  auto blk = std::make_unique<Block>(std::move(decls), std::move(stmts));
+  blk->line = startLine;
+  blk->column = startCol;
+  return blk;
 }
 
 std::unique_ptr<Declaration> Parser::parseDeclaration() {
   if (match(TokenType::Var)) {
+    Token startTok = m_tokens[m_current - 1];
     std::vector<std::string> names;
     if (peek().type == TokenType::Identifier) {
       names.push_back(advance().lexeme);
@@ -73,20 +84,28 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
     match(TokenType::Colon);
     auto type = parseTypeSpec();
     match(TokenType::Semicolon);
-    return std::make_unique<VarDecl>(std::move(names), std::move(type));
+    auto node = std::make_unique<VarDecl>(std::move(names), std::move(type));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Type)) {
+    Token startTok = m_tokens[m_current - 1];
     std::string name;
     if (peek().type == TokenType::Identifier)
       name = advance().lexeme;
     match(TokenType::Equal);
     auto type = parseTypeSpec();
     match(TokenType::Semicolon);
-    return std::make_unique<TypeDecl>(std::move(name), std::move(type));
+    auto node = std::make_unique<TypeDecl>(std::move(name), std::move(type));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Function)) {
+    Token startTok = m_tokens[m_current - 1];
     std::string name;
     if (peek().type == TokenType::Identifier)
       name = advance().lexeme;
@@ -109,11 +128,15 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
     match(TokenType::Semicolon);
     auto body = parseBlock();
     match(TokenType::Semicolon);
-    return std::make_unique<FunctionDecl>(std::move(name), std::move(params),
-                                         std::move(ret), std::move(body));
+    auto node = std::make_unique<FunctionDecl>(std::move(name), std::move(params),
+                                              std::move(ret), std::move(body));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Procedure)) {
+    Token startTok = m_tokens[m_current - 1];
     std::string name;
     if (peek().type == TokenType::Identifier)
       name = advance().lexeme;
@@ -134,8 +157,11 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
     match(TokenType::Semicolon);
     auto body = parseBlock();
     match(TokenType::Semicolon);
-    return std::make_unique<ProcedureDecl>(std::move(name), std::move(params),
-                                           std::move(body));
+    auto node = std::make_unique<ProcedureDecl>(std::move(name), std::move(params),
+                                                std::move(body));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   // Unknown declaration - skip token
@@ -153,6 +179,8 @@ static bool is_op(TokenType t) {
 
 std::unique_ptr<VariableExpr> Parser::parseVariable(std::string name) {
   std::vector<VariableExpr::Selector> sels;
+  std::size_t line = m_tokens[m_current - 1].line;
+  std::size_t col = m_tokens[m_current - 1].column;
   while (true) {
     if (match(TokenType::Caret)) {
       sels.emplace_back("", VariableExpr::Selector::Kind::Pointer);
@@ -169,12 +197,16 @@ std::unique_ptr<VariableExpr> Parser::parseVariable(std::string name) {
       break;
     }
   }
-  return std::make_unique<VariableExpr>(std::move(name), std::move(sels));
+  auto node = std::make_unique<VariableExpr>(std::move(name), std::move(sels));
+  node->line = line;
+  node->column = col;
+  return node;
 }
 
 std::unique_ptr<Expression> Parser::parseExpression() {
   // parse literal or variable
   std::unique_ptr<Expression> left;
+  Token startTok = peek();
   if (match(TokenType::Number)) {
     std::string num = m_tokens[m_current - 1].lexeme;
     if (match(TokenType::Dot)) {
@@ -183,7 +215,10 @@ std::unique_ptr<Expression> Parser::parseExpression() {
         num += advance().lexeme;
       }
     }
-    left = std::make_unique<LiteralExpr>(num);
+    auto lit = std::make_unique<LiteralExpr>(num);
+    lit->line = startTok.line;
+    lit->column = startTok.column;
+    left = std::move(lit);
   } else if (match(TokenType::Identifier)) {
     std::string id = m_tokens[m_current - 1].lexeme;
     if (id == "'") {
@@ -192,7 +227,10 @@ std::unique_ptr<Expression> Parser::parseExpression() {
         val += advance().lexeme;
       match(TokenType::Identifier); // closing quote
       val += "'";
-      left = std::make_unique<LiteralExpr>(val);
+      auto lit = std::make_unique<LiteralExpr>(val);
+      lit->line = startTok.line;
+      lit->column = startTok.column;
+      left = std::move(lit);
     } else {
       left = parseVariable(id);
     }
@@ -200,7 +238,10 @@ std::unique_ptr<Expression> Parser::parseExpression() {
     left = parseExpression();
     match(TokenType::RightParen);
   } else {
-    left = std::make_unique<LiteralExpr>("0");
+    auto lit = std::make_unique<LiteralExpr>("0");
+    lit->line = startTok.line;
+    lit->column = startTok.column;
+    left = std::move(lit);
   }
 
   if (is_op(peek().type) ||
@@ -216,13 +257,18 @@ std::unique_ptr<Expression> Parser::parseExpression() {
       op = advance().lexeme;
     }
     auto right = parseExpression();
-    return std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+    auto node =
+        std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   return left;
 }
 
 std::unique_ptr<Statement> Parser::parseStatement() {
+  Token startTok = peek();
   if (match(TokenType::Begin)) {
     std::vector<std::unique_ptr<Statement>> stmts;
     while (!isAtEnd() && peek().type != TokenType::End) {
@@ -232,7 +278,10 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     }
     match(TokenType::End);
     match(TokenType::Semicolon);
-    return std::make_unique<CompoundStmt>(std::move(stmts));
+    auto node = std::make_unique<CompoundStmt>(std::move(stmts));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::If)) {
@@ -243,15 +292,22 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     if (match(TokenType::Else)) {
       elseBranch = parseStatement();
     }
-    return std::make_unique<IfStmt>(std::move(cond), std::move(thenBranch),
-                                    std::move(elseBranch));
+    auto node =
+        std::make_unique<IfStmt>(std::move(cond), std::move(thenBranch),
+                                 std::move(elseBranch));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::While)) {
     auto cond = parseExpression();
     match(TokenType::Do);
     auto body = parseStatement();
-    return std::make_unique<WhileStmt>(std::move(cond), std::move(body));
+    auto node = std::make_unique<WhileStmt>(std::move(cond), std::move(body));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Repeat)) {
@@ -264,7 +320,10 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     match(TokenType::Until);
     auto cond = parseExpression();
     match(TokenType::Semicolon);
-    return std::make_unique<RepeatStmt>(std::move(body), std::move(cond));
+    auto node = std::make_unique<RepeatStmt>(std::move(body), std::move(cond));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::For)) {
@@ -284,8 +343,11 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     auto limit = parseExpression();
     match(TokenType::Do);
     auto body = parseStatement();
-    return std::make_unique<ForStmt>(std::move(init), downto, std::move(limit),
-                                     std::move(body));
+    auto node = std::make_unique<ForStmt>(std::move(init), downto,
+                                          std::move(limit), std::move(body));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Case)) {
@@ -302,14 +364,20 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     }
     match(TokenType::End);
     match(TokenType::Semicolon);
-    return std::make_unique<CaseStmt>(std::move(expr), std::move(cases));
+    auto node = std::make_unique<CaseStmt>(std::move(expr), std::move(cases));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::With)) {
     auto recordVar = parseExpression();
     match(TokenType::Do);
     auto body = parseStatement();
-    return std::make_unique<WithStmt>(std::move(recordVar), std::move(body));
+    auto node = std::make_unique<WithStmt>(std::move(recordVar), std::move(body));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::New) || match(TokenType::Dispose)) {
@@ -321,7 +389,10 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     }
     match(TokenType::RightParen);
     match(TokenType::Semicolon);
-    return std::make_unique<ProcCall>(name, std::move(args));
+    auto node = std::make_unique<ProcCall>(name, std::move(args));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (peek().type == TokenType::Identifier) {
@@ -337,7 +408,10 @@ std::unique_ptr<Statement> Parser::parseStatement() {
       }
       match(TokenType::RightParen);
       match(TokenType::Semicolon);
-      return std::make_unique<ProcCall>(id, std::move(args));
+    auto node = std::make_unique<ProcCall>(id, std::move(args));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
     }
 
     auto var = parseVariable(id);
@@ -345,7 +419,11 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     match(TokenType::Assign);
     auto val = parseExpression();
     match(TokenType::Semicolon);
-    return std::make_unique<AssignStmt>(std::move(var), std::move(val));
+    auto node =
+        std::make_unique<AssignStmt>(std::move(var), std::move(val));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   // unknown statement - consume token
@@ -354,9 +432,13 @@ std::unique_ptr<Statement> Parser::parseStatement() {
 }
 
 std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
+  Token startTok = peek();
   if (match(TokenType::Caret)) {
     auto ref = parseTypeSpec();
-    return std::make_unique<PointerTypeSpec>(std::move(ref));
+    auto node = std::make_unique<PointerTypeSpec>(std::move(ref));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Array)) {
@@ -375,7 +457,11 @@ std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
     }
     match(TokenType::Of);
     auto elem = parseTypeSpec();
-    return std::make_unique<ArrayTypeSpec>(std::move(ranges), std::move(elem));
+    auto node =
+        std::make_unique<ArrayTypeSpec>(std::move(ranges), std::move(elem));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Record)) {
@@ -391,7 +477,10 @@ std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
           std::make_unique<VarDecl>(std::move(names), std::move(ftype)));
     }
     match(TokenType::End);
-    return std::make_unique<RecordTypeSpec>(std::move(fields));
+    auto node = std::make_unique<RecordTypeSpec>(std::move(fields));
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
 
   if (match(TokenType::Identifier)) {
@@ -407,10 +496,15 @@ std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
       bt = BasicType::LongInt;
     else if (name == "string")
       bt = BasicType::String;
-    return std::make_unique<SimpleTypeSpec>(bt, name);
+    auto node = std::make_unique<SimpleTypeSpec>(bt, name);
+    node->line = startTok.line;
+    node->column = startTok.column;
+    return node;
   }
-
-  return std::make_unique<SimpleTypeSpec>(BasicType::Integer, "integer");
+  auto node = std::make_unique<SimpleTypeSpec>(BasicType::Integer, "integer");
+  node->line = startTok.line;
+  node->column = startTok.column;
+  return node;
 }
 
 } // namespace pascal

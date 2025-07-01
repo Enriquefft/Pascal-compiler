@@ -1048,6 +1048,7 @@ TEST(FunctionTests, Func3) {
                              "main:\n"
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
+
 }
 
 // Float
