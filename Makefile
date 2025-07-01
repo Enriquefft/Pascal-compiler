@@ -1,4 +1,4 @@
-CXX ?= clang++
+CXX ?= g++
 MODE ?= debug
 
 # THROW_ON_ERROR = -Werror

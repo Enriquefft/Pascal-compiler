@@ -137,9 +137,9 @@ std::string tokenTypeToString(pascal::TokenType type) {
 
 } // namespace
 
-auto main(int /*argc*/, char* /*argv*/[]) -> int {
+auto main(int /*argc*/, char * /*argv*/[]) -> int {
   crow::App<crow::CORSHandler> app;
-  auto& cors = app.get_middleware<crow::CORSHandler>();
+  auto &cors = app.get_middleware<crow::CORSHandler>();
   cors.global()
       .methods("GET"_method, "POST"_method, "OPTIONS"_method)
       .headers("Content-Type");
@@ -159,9 +159,9 @@ auto main(int /*argc*/, char* /*argv*/[]) -> int {
   //   line?: number;
   //   column?: number;
   // };
-  CROW_ROUTE(app, "/compile").methods(crow::HTTPMethod::Post)(
-      [](const crow::request& req) {
-        const std::string& code = req.body;
+  CROW_ROUTE(app, "/compile")
+      .methods(crow::HTTPMethod::Post)([](const crow::request &req) {
+        const std::string &code = req.body;
 
         crow::json::wvalue result;
         std::vector<pascal::Token> tokens;
@@ -184,6 +184,10 @@ auto main(int /*argc*/, char* /*argv*/[]) -> int {
             error = "Parsing failed";
           }
 
+          std::cout << "AST valid: " << ast.valid << std::endl;
+          std::cout << "AST root: " << (ast.root ? "not null" : "null")
+                    << std::endl;
+
           // Validation
           if (error.empty()) {
             pascal::ASTValidator validator;
@@ -203,12 +207,12 @@ auto main(int /*argc*/, char* /*argv*/[]) -> int {
             pascal::Executor exec;
             output = exec.run(asm_code);
           }
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
           error = e.what();
         }
 
         // Fill tokens regardless of success
-        for (std::size_t i = 0; i < tokens.size(); ++i) {
+        for (unsigned int i = 0; i < tokens.size(); ++i) {
           result["tokens"][i]["token_name"] = tokenTypeToString(tokens[i].type);
           result["tokens"][i]["token_content"] = tokens[i].lexeme;
         }
