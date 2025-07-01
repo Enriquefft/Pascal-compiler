@@ -13,16 +13,16 @@ class CodeGenerator : public NodeVisitor {
 public:
   [[nodiscard]] std::string generate(const AST &ast);
 
-  void visitProgram(const Program & /*node*/) override {}
-  void visitBlock(const Block & /*node*/) override {}
-  void visitVarDecl(const VarDecl & /*node*/) override {}
+  void visitProgram(const Program &node) override;
+  void visitBlock(const Block &node) override;
+  void visitVarDecl(const VarDecl &node) override;
   void visitParamDecl(const ParamDecl & /*node*/) override {}
   void visitConstDecl(const ConstDecl & /*node*/) override {}
   void visitTypeDecl(const TypeDecl & /*node*/) override {}
   void visitProcedureDecl(const ProcedureDecl & /*node*/) override {}
   void visitFunctionDecl(const FunctionDecl & /*node*/) override {}
-  void visitCompoundStmt(const CompoundStmt & /*node*/) override {}
-  void visitAssignStmt(const AssignStmt & /*node*/) override {}
+  void visitCompoundStmt(const CompoundStmt &node) override;
+  void visitAssignStmt(const AssignStmt &node) override;
   void visitProcCall(const ProcCall & /*node*/) override {}
   void visitIfStmt(const IfStmt & /*node*/) override {}
   void visitWhileStmt(const WhileStmt & /*node*/) override {}
@@ -46,6 +46,7 @@ public:
 
 private:
   void emit(const std::string &text);
+  void genExpr(const Expression *expr);
 
   std::string m_output;
 };
