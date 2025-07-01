@@ -7,7 +7,7 @@
 
 namespace pascal {
 
-class AST;
+struct AST;
 
 class CodeGenerator : public NodeVisitor {
 public:
