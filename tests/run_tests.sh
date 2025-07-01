@@ -9,4 +9,8 @@ if [ ! -x "$TEST_BIN" ]; then
   exit 1
 fi
 
-"$TEST_BIN"
+if [ $# -gt 0 ]; then
+  "$TEST_BIN" --gtest_filter="$1"
+else
+  "$TEST_BIN"
+fi
