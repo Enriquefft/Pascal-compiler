@@ -6,7 +6,6 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         build-essential \
         git \
-        cmake \
         libboost-all-dev \
         libssl-dev \
         zlib1g-dev \
@@ -15,7 +14,7 @@ RUN apt-get update \
 
 # Install Crow (header-only library)
 
-RUN sudo apt-get install --reinstall ca-certificates
+RUN apt-get install --reinstall ca-certificates
 RUN git config --global http.sslverify false
 
 RUN git clone https://github.com/CrowCpp/Crow.git /tmp/crow \
