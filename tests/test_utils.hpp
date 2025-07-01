@@ -74,7 +74,147 @@ inline bool ast_equal_node(const pascal::ASTNode *a, const pascal::ASTNode *b) {
     auto vb = static_cast<const pascal::VariableExpr *>(b);
     if (va->name != vb->name || va->selectors.size() != vb->selectors.size())
       return false;
+    for (size_t i = 0; i < va->selectors.size(); ++i) {
+      const auto &sa = va->selectors[i];
+      const auto &sb = vb->selectors[i];
+      if (sa.kind != sb.kind)
+        return false;
+      switch (sa.kind) {
+      case pascal::VariableExpr::Selector::Kind::Field:
+        if (sa.field != sb.field)
+          return false;
+        break;
+      case pascal::VariableExpr::Selector::Kind::Index:
+        if (!ast_equal_node(sa.index.get(), sb.index.get()))
+          return false;
+        break;
+      case pascal::VariableExpr::Selector::Kind::Pointer:
+        break;
+      }
+    }
     return true;
+  }
+  case NodeKind::IdentifierList: {
+    auto ia = static_cast<const pascal::IdentifierList *>(a);
+    auto ib = static_cast<const pascal::IdentifierList *>(b);
+    return ia->identifiers == ib->identifiers;
+  }
+  case NodeKind::VarDecl: {
+    auto va = static_cast<const pascal::VarDecl *>(a);
+    auto vb = static_cast<const pascal::VarDecl *>(b);
+    return ast_equal_node(&va->names, &vb->names) &&
+           ast_equal_node(va->type.get(), vb->type.get());
+  }
+  case NodeKind::TypeDecl: {
+    auto ta = static_cast<const pascal::TypeDecl *>(a);
+    auto tb = static_cast<const pascal::TypeDecl *>(b);
+    return ta->name == tb->name &&
+           ast_equal_node(ta->type.get(), tb->type.get());
+  }
+  case NodeKind::Range: {
+    auto ra = static_cast<const pascal::Range *>(a);
+    auto rb = static_cast<const pascal::Range *>(b);
+    return ra->start == rb->start && ra->end == rb->end;
+  }
+  case NodeKind::SimpleTypeSpec: {
+    auto sa = static_cast<const pascal::SimpleTypeSpec *>(a);
+    auto sb = static_cast<const pascal::SimpleTypeSpec *>(b);
+    return sa->basic == sb->basic && sa->name == sb->name;
+  }
+  case NodeKind::ArrayTypeSpec: {
+    auto aa = static_cast<const pascal::ArrayTypeSpec *>(a);
+    auto ab = static_cast<const pascal::ArrayTypeSpec *>(b);
+    if (aa->ranges.size() != ab->ranges.size())
+      return false;
+    for (size_t i = 0; i < aa->ranges.size(); ++i)
+      if (!ast_equal_node(&aa->ranges[i], &ab->ranges[i]))
+        return false;
+    return ast_equal_node(aa->elementType.get(), ab->elementType.get());
+  }
+  case NodeKind::CompoundStmt: {
+    auto ca = static_cast<const pascal::CompoundStmt *>(a);
+    auto cb = static_cast<const pascal::CompoundStmt *>(b);
+    if (ca->statements.size() != cb->statements.size())
+      return false;
+    for (size_t i = 0; i < ca->statements.size(); ++i)
+      if (!ast_equal_node(ca->statements[i].get(), cb->statements[i].get()))
+        return false;
+    return true;
+  }
+  case NodeKind::ProcCall: {
+    auto pa = static_cast<const pascal::ProcCall *>(a);
+    auto pb = static_cast<const pascal::ProcCall *>(b);
+    if (pa->name != pb->name || pa->args.size() != pb->args.size())
+      return false;
+    for (size_t i = 0; i < pa->args.size(); ++i)
+      if (!ast_equal_node(pa->args[i].get(), pb->args[i].get()))
+        return false;
+    return true;
+  }
+  case NodeKind::IfStmt: {
+    auto ia = static_cast<const pascal::IfStmt *>(a);
+    auto ib = static_cast<const pascal::IfStmt *>(b);
+    return ast_equal_node(ia->condition.get(), ib->condition.get()) &&
+           ast_equal_node(ia->thenBranch.get(), ib->thenBranch.get()) &&
+           ast_equal_node(ia->elseBranch.get(), ib->elseBranch.get());
+  }
+  case NodeKind::WhileStmt: {
+    auto wa = static_cast<const pascal::WhileStmt *>(a);
+    auto wb = static_cast<const pascal::WhileStmt *>(b);
+    return ast_equal_node(wa->condition.get(), wb->condition.get()) &&
+           ast_equal_node(wa->body.get(), wb->body.get());
+  }
+  case NodeKind::ForStmt: {
+    auto fa = static_cast<const pascal::ForStmt *>(a);
+    auto fb = static_cast<const pascal::ForStmt *>(b);
+    return ast_equal_node(fa->init.get(), fb->init.get()) &&
+           fa->downto == fb->downto &&
+           ast_equal_node(fa->limit.get(), fb->limit.get()) &&
+           ast_equal_node(fa->body.get(), fb->body.get());
+  }
+  case NodeKind::RepeatStmt: {
+    auto ra = static_cast<const pascal::RepeatStmt *>(a);
+    auto rb = static_cast<const pascal::RepeatStmt *>(b);
+    if (ra->body.size() != rb->body.size())
+      return false;
+    for (size_t i = 0; i < ra->body.size(); ++i)
+      if (!ast_equal_node(ra->body[i].get(), rb->body[i].get()))
+        return false;
+    return ast_equal_node(ra->condition.get(), rb->condition.get());
+  }
+  case NodeKind::CaseLabel: {
+    auto la = static_cast<const pascal::CaseLabel *>(a);
+    auto lb = static_cast<const pascal::CaseLabel *>(b);
+    if (la->constants.size() != lb->constants.size())
+      return false;
+    for (size_t i = 0; i < la->constants.size(); ++i)
+      if (!ast_equal_node(la->constants[i].get(), lb->constants[i].get()))
+        return false;
+    return ast_equal_node(la->stmt.get(), lb->stmt.get());
+  }
+  case NodeKind::CaseStmt: {
+    auto ca = static_cast<const pascal::CaseStmt *>(a);
+    auto cb = static_cast<const pascal::CaseStmt *>(b);
+    if (ca->cases.size() != cb->cases.size())
+      return false;
+    if (!ast_equal_node(ca->expr.get(), cb->expr.get()))
+      return false;
+    for (size_t i = 0; i < ca->cases.size(); ++i)
+      if (!ast_equal_node(ca->cases[i].get(), cb->cases[i].get()))
+        return false;
+    return true;
+  }
+  case NodeKind::WithStmt: {
+    auto wa = static_cast<const pascal::WithStmt *>(a);
+    auto wb = static_cast<const pascal::WithStmt *>(b);
+    return ast_equal_node(wa->recordExpr.get(), wb->recordExpr.get()) &&
+           ast_equal_node(wa->body.get(), wb->body.get());
+  }
+  case NodeKind::UnaryExpr: {
+    auto ua = static_cast<const pascal::UnaryExpr *>(a);
+    auto ub = static_cast<const pascal::UnaryExpr *>(b);
+    return ua->op == ub->op &&
+           ast_equal_node(ua->operand.get(), ub->operand.get());
   }
   default:
     return true;
