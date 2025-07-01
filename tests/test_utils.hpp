@@ -216,6 +216,66 @@ inline bool ast_equal_node(const pascal::ASTNode *a, const pascal::ASTNode *b) {
     return ua->op == ub->op &&
            ast_equal_node(ua->operand.get(), ub->operand.get());
   }
+  case NodeKind::ConstDecl: {
+    auto ca = static_cast<const pascal::ConstDecl *>(a);
+    auto cb = static_cast<const pascal::ConstDecl *>(b);
+    return ca->name == cb->name &&
+           ast_equal_node(ca->value.get(), cb->value.get());
+  }
+  case NodeKind::ProcedureDecl: {
+    auto pa = static_cast<const pascal::ProcedureDecl *>(a);
+    auto pb = static_cast<const pascal::ProcedureDecl *>(b);
+    if (pa->name != pb->name || pa->params.size() != pb->params.size())
+      return false;
+    for (size_t i = 0; i < pa->params.size(); ++i)
+      if (!ast_equal_node(pa->params[i].get(), pb->params[i].get()))
+        return false;
+    return ast_equal_node(pa->body.get(), pb->body.get());
+  }
+  case NodeKind::FunctionDecl: {
+    auto fa = static_cast<const pascal::FunctionDecl *>(a);
+    auto fb = static_cast<const pascal::FunctionDecl *>(b);
+    if (fa->name != fb->name || fa->params.size() != fb->params.size())
+      return false;
+    for (size_t i = 0; i < fa->params.size(); ++i)
+      if (!ast_equal_node(fa->params[i].get(), fb->params[i].get()))
+        return false;
+    return ast_equal_node(fa->returnType.get(), fb->returnType.get()) &&
+           ast_equal_node(fa->body.get(), fb->body.get());
+  }
+  case NodeKind::ParamDecl: {
+    auto pa = static_cast<const pascal::ParamDecl *>(a);
+    auto pb = static_cast<const pascal::ParamDecl *>(b);
+    return pa->names == pb->names &&
+           ast_equal_node(pa->type.get(), pb->type.get());
+  }
+  case NodeKind::RecordTypeSpec: {
+    auto ra = static_cast<const pascal::RecordTypeSpec *>(a);
+    auto rb = static_cast<const pascal::RecordTypeSpec *>(b);
+    if (ra->fields.size() != rb->fields.size())
+      return false;
+    for (size_t i = 0; i < ra->fields.size(); ++i)
+      if (!ast_equal_node(ra->fields[i].get(), rb->fields[i].get()))
+        return false;
+    return true;
+  }
+  case NodeKind::PointerTypeSpec: {
+    auto pa = static_cast<const pascal::PointerTypeSpec *>(a);
+    auto pb = static_cast<const pascal::PointerTypeSpec *>(b);
+    return ast_equal_node(pa->refType.get(), pb->refType.get());
+  }
+  case NodeKind::NewExpr: {
+    auto na = static_cast<const pascal::NewExpr *>(a);
+    auto nb = static_cast<const pascal::NewExpr *>(b);
+    return ast_equal_node(na->variable.get(), nb->variable.get());
+  }
+  case NodeKind::DisposeExpr: {
+    auto da = static_cast<const pascal::DisposeExpr *>(a);
+    auto db = static_cast<const pascal::DisposeExpr *>(b);
+    return ast_equal_node(da->variable.get(), db->variable.get());
+  }
+  case NodeKind::TypeSpec:
+    return true;
   default:
     return true;
   }
