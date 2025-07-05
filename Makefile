@@ -1,4 +1,7 @@
 CXX ?= g++
+CXX := ccache $(CXX)
+MAKEFLAGS += -j$(shell nproc)
+
 MODE ?= debug
 
 # THROW_ON_ERROR = -Werror
@@ -24,40 +27,48 @@ else
 OPT = -ggdb3 $(SANITIZE)
 endif
 
-CXXFLAGS = -std=c++23 $(WARN) $(OPT) -Iinclude -Isrc
-SRC_ALL = $(wildcard src/*.cpp src/token/*.cpp src/scanner/*.cpp \
+DEPFLAGS = -MMD -MP
+CXXFLAGS = -std=c++23 $(WARN) $(OPT) $(DEPFLAGS) -Iinclude -Isrc
+NONDEPFLAGS = $(filter-out $(DEPFLAGS),$(CXXFLAGS))
+
+SRC_ALL := $(wildcard src/*.cpp src/token/*.cpp src/scanner/*.cpp \
                        src/parser/*.cpp src/visitors/*.cpp src/executor/*.cpp)
-SRC = $(filter-out src/api.cpp,$(SRC_ALL))
+SRC := $(filter-out src/api.cpp,$(SRC_ALL))
+API_SRC := $(filter-out src/main.cpp,$(SRC_ALL))
+SRC_TEST := $(filter-out src/main.cpp src/api.cpp,$(SRC_ALL))
 
-API_SRC = $(filter-out src/main.cpp,$(SRC_ALL))
-
-SRC_TEST = $(filter-out src/main.cpp src/api.cpp,$(SRC_ALL))
 ifdef FILE
-TEST_SRC = $(addprefix tests/,$(FILE))
+TEST_SRC := $(addprefix tests/,$(FILE))
 else
-TEST_SRC = $(wildcard tests/*.cpp)
+TEST_SRC := $(wildcard tests/*.cpp)
 endif
-BUILD_DIR = build
-TARGET = $(BUILD_DIR)/compiler
-TEST_BIN = $(BUILD_DIR)/tests
-API_BIN = $(BUILD_DIR)/api
 
+BUILD_DIR := build
+TARGET := $(BUILD_DIR)/compiler
+API_BIN := $(BUILD_DIR)/api
+TEST_BIN := $(BUILD_DIR)/tests
+
+OBJS := $(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(SRC))
+API_OBJS := $(patsubst src/%.cpp,$(BUILD_DIR)/%.o,$(API_SRC))
+
+.PHONY: all api tests clean
 all: compiler
 
 $(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+	mkdir -p $@
+
+$(BUILD_DIR)/%.o: src/%.cpp | $(BUILD_DIR)
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 compiler: $(TARGET)
 
-$(TARGET): $(SRC) | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
-
-
-.PHONY: tests clean
-
 api: $(API_BIN)
-$(API_BIN): $(API_SRC) | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(API_SRC) -o $(API_BIN)
+$(API_BIN): $(API_OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 ifdef FILE
 tests: clean $(TEST_BIN)
@@ -67,7 +78,7 @@ endif
 	cd tests && ./run_tests.sh $(FILTER)
 
 $(TEST_BIN): $(TEST_SRC) $(SRC_TEST) | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(TEST_SRC) $(SRC_TEST) -lgtest -lgtest_main -lpthread -o $(TEST_BIN)
+	$(CXX) $(NONDEPFLAGS) $(TEST_SRC) $(SRC_TEST) -lgtest -lgtest_main -lpthread -o $(TEST_BIN)
 
-clean:
-	rm -rf $(BUILD_DIR)
+-include $(BUILD_DIR)/**/*.d
+-include $(BUILD_DIR)/*.d

@@ -1,0 +1,19 @@
+program NestedPointer;
+type
+  UIntArray = array[1..4] of unsigned integer;
+  PRec = ^Rec;
+  Rec = record
+    nums: ^UIntArray;
+  end;
+var
+  r: PRec;
+  i: integer;
+begin
+  new(r);
+  new(r^.nums);
+  for i := 1 to 4 do
+    r^.nums^[i] := i;
+  writeln(r^.nums^[2]);
+  dispose(r^.nums);
+  dispose(r);
+end.

@@ -8,6 +8,7 @@ ASTNode::~ASTNode() = default;
 
 Program::~Program() = default;
 VarDecl::~VarDecl() = default;
+VarSection::~VarSection() = default;
 TypeDecl::~TypeDecl() = default;
 ProcedureDecl::~ProcedureDecl() = default;
 ParamDecl::~ParamDecl() = default;
@@ -16,6 +17,7 @@ CaseStmt::~CaseStmt() = default;
 ArrayTypeSpec::~ArrayTypeSpec() = default;
 PointerTypeSpec::~PointerTypeSpec() = default;
 IdentifierList ::~IdentifierList() = default;
+TypeDefinition::~TypeDefinition() = default;
 
 Expression::~Expression() = default;
 Statement::~Statement() = default;

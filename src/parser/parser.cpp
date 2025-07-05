@@ -1,4 +1,5 @@
 #include "parser/parser.hpp"
+#include <iostream>
 #include <string>
 
 namespace pascal {
@@ -67,6 +68,7 @@ IdentifierList Parser::parseIdentifierList() {
   }
   while (match(TokenType::Comma)) {
     if (peek().type == TokenType::Identifier) {
+
       ids.push_back(parseIdentifier());
     } else {
       throw std::runtime_error("Expected identifier after comma");
@@ -113,19 +115,19 @@ std::unique_ptr<Block> Parser::parseBlock() {
     }
   }
 
-  while (!isAtEnd() && peek().type != TokenType::End &&
-         peek().type != TokenType::Dot) {
+  if (!match(TokenType::Begin)) {
+    throw std::runtime_error("Expected 'begin' to start block");
+  }
+
+  while (!isAtEnd() && peek().type != TokenType::End) {
+
     auto stmt = parseStatement();
     if (stmt)
       stmts.push_back(std::move(stmt));
   }
 
-  if (match(TokenType::End)) {
-    // Block ended explicitly; nothing to do here
-  } else if (peek().type == TokenType::Dot || isAtEnd()) {
-    // allow implicit end when reaching '.' or EOF
-  } else {
-    throw std::runtime_error("Expected 'end' or '.' at the end of block");
+  if (!match(TokenType::End)) {
+    throw std::runtime_error("Expected 'end' at the end of block");
   }
 
   auto blk = std::make_unique<Block>(std::move(decls), std::move(stmts));
@@ -133,35 +135,90 @@ std::unique_ptr<Block> Parser::parseBlock() {
   blk->column = startCol;
   return blk;
 }
+TypeDefinition Parser::parseTypeDecl() {
 
-std::unique_ptr<Declaration> Parser::parseDeclaration() {
+  auto name = parseIdentifier();
+
+  if (!match(TokenType::Equal)) {
+    throw std::runtime_error("Expected '=' after type name");
+  }
+
+  auto type = parseTypeSpec();
+
+  if (!match(TokenType::Semicolon)) {
+    throw std::runtime_error("Expected semicolon after type declaration");
+  }
+
+  return {std::move(name), type};
+}
+VarDecl Parser::parseVarDecl() {
+
+  auto names = parseIdentifierList();
+
+  if (!match(TokenType::Colon)) {
+    throw std::runtime_error("Expected ':' after type name");
+  }
+
+  auto type = parseTypeSpec();
+
+  if (!match(TokenType::Semicolon)) {
+    throw std::runtime_error("Expected semicolon after type declaration");
+  }
+
+  return VarDecl{std::move(names), std::move(type)};
+}
+
+std::unique_ptr<Declaration>
+Parser::parseDeclaration(const std::optional<TokenType> &expectedStart) {
+
+  if (expectedStart && peek().type != *expectedStart) {
+    throw std::runtime_error("Expected declaration start token, found " +
+                             peek().lexeme);
+  }
+
   if (match(TokenType::Var)) {
     Token startTok = m_tokens[m_current - 1];
-    std::vector<std::string> names;
-    if (peek().type == TokenType::Identifier) {
-      names.push_back(advance().lexeme);
+
+    std::vector<VarDecl> varDeclarations;
+    while (peek().type != TokenType::Semicolon && !isAtEnd()) {
+      freeze();
+      try {
+        varDeclarations.emplace_back(parseVarDecl());
+
+        pop();
+
+      } catch (const std::runtime_error &e) {
+        std::cerr << "Error parsing var declaration: " << e.what() << "\n";
+        reset();
+        break;
+      }
     }
-    match(TokenType::Colon);
-    auto type = parseTypeSpec();
-    match(TokenType::Semicolon);
-    auto node = std::make_unique<VarDecl>(std::move(names), std::move(type));
-    node->line = startTok.line;
-    node->column = startTok.column;
-    return node;
+
+    return std::make_unique<VarSection>(varDeclarations, startTok.line,
+                                        startTok.column);
   }
 
   if (match(TokenType::Type)) {
+
     Token startTok = m_tokens[m_current - 1];
-    std::string name;
-    if (peek().type == TokenType::Identifier)
-      name = advance().lexeme;
-    match(TokenType::Equal);
-    auto type = parseTypeSpec();
-    match(TokenType::Semicolon);
-    auto node = std::make_unique<TypeDecl>(std::move(name), std::move(type));
-    node->line = startTok.line;
-    node->column = startTok.column;
-    return node;
+
+    std::vector<TypeDefinition> typeDefs;
+    while (peek().type != TokenType::Semicolon && !isAtEnd()) {
+      freeze();
+      try {
+        TypeDefinition typeDef = parseTypeDecl();
+        typeDefs.emplace_back(std::move(typeDef));
+
+        pop();
+
+      } catch (const std::runtime_error &e) {
+        std::cerr << "Error parsing type declaration: " << e.what() << "\n";
+        reset();
+        break;
+      }
+    }
+
+    return std::make_unique<TypeDecl>(typeDefs, startTok.line, startTok.column);
   }
 
   if (match(TokenType::Function)) {
@@ -502,6 +559,7 @@ std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
   }
 
   if (match(TokenType::Array)) {
+
     std::vector<Range> ranges;
     if (match(TokenType::LeftBracket)) {
       if (match(TokenType::Number)) {
@@ -525,16 +583,16 @@ std::unique_ptr<TypeSpec> Parser::parseTypeSpec() {
   }
 
   if (match(TokenType::Record)) {
+
     std::vector<std::unique_ptr<VarDecl>> fields;
     while (!isAtEnd() && peek().type != TokenType::End) {
-      std::vector<std::string> names;
-      if (peek().type == TokenType::Identifier)
-        names.push_back(advance().lexeme);
+
+      auto names = parseIdentifierList();
+
       match(TokenType::Colon);
       auto ftype = parseTypeSpec();
       match(TokenType::Semicolon);
-      fields.emplace_back(
-          std::make_unique<VarDecl>(std::move(names), std::move(ftype)));
+      fields.emplace_back(std::make_unique<VarDecl>(names, std::move(ftype)));
     }
     match(TokenType::End);
     auto node = std::make_unique<RecordTypeSpec>(std::move(fields));

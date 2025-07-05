@@ -1,7 +1,6 @@
 #include "parser/validator.hpp"
 
 namespace pascal {
-
 ASTValidator::Result ASTValidator::validate(const AST &ast) {
   m_valid = ast.valid && ast.root != nullptr;
   m_errorMsg.clear();
@@ -11,7 +10,9 @@ ASTValidator::Result ASTValidator::validate(const AST &ast) {
     m_errorMsg = "Invalid AST";
     return {false, m_errorMsg, m_errorLine, m_errorColumn};
   }
+  pushScope();
   ast.root->accept(*this);
+  popScope();
   return {m_valid, m_errorMsg, m_errorLine, m_errorColumn};
 }
 
@@ -25,15 +26,22 @@ void ASTValidator::setError(const std::string &msg, const ASTNode &node) {
 }
 
 void ASTValidator::visitProgram(const Program &node) {
+  pushScope();
+
   if (node.name.empty())
     setError("Program missing name", node);
-  else if (!node.block)
-    setError("Program missing block", node);
+  else {
+    declare(node.name);
+    if (!node.block)
+      setError("Program missing block", node);
+  }
   if (node.block)
     node.block->accept(*this);
+  popScope();
 }
 
 void ASTValidator::visitBlock(const Block &node) {
+  pushScope();
   for (const auto &decl : node.declarations) {
     if (!decl)
       setError("Null declaration", node);
@@ -46,22 +54,51 @@ void ASTValidator::visitBlock(const Block &node) {
     else
       stmt->accept(*this);
   }
+  popScope();
 }
 
 void ASTValidator::visitVarDecl(const VarDecl &node) {
   if (node.names.empty())
     setError("VarDecl missing names", node);
-  else if (!node.type)
-    setError("VarDecl missing type", node);
+
+  else {
+    for (auto &n : node.names)
+      declare(n);
+    if (!node.type)
+      setError("VarDecl missing type", node);
+  }
+
   if (node.type)
     node.type->accept(*this);
+}
+
+void ASTValidator::visitTypeDefinition(const TypeDefinition &node) {
+  if (node.name.empty())
+    setError("TypeDefinition missing name", node);
+  else if (!node.type)
+    setError("TypeDefinition missing type", node);
+  if (node.type)
+    node.type->accept(*this);
+}
+
+void ASTValidator::visitVarSection(const VarSection &node) {
+
+  for (const auto &decl : node.declarations) {
+    decl.accept(*this);
+  }
 }
 
 void ASTValidator::visitParamDecl(const ParamDecl &node) {
   if (node.names.empty())
     setError("ParamDecl missing names", node);
-  else if (!node.type)
-    setError("ParamDecl missing type", node);
+
+  else {
+    for (auto &n : node.names)
+      declare(n);
+    if (!node.type)
+      setError("ParamDecl missing type", node);
+  }
+
   if (node.type)
     node.type->accept(*this);
 }
@@ -76,36 +113,54 @@ void ASTValidator::visitConstDecl(const ConstDecl &node) {
 }
 
 void ASTValidator::visitTypeDecl(const TypeDecl &node) {
-  if (node.name.empty())
-    setError("TypeDecl missing name", node);
-  else if (!node.type)
-    setError("TypeDecl missing type", node);
-  if (node.type)
-    node.type->accept(*this);
+
+  for (const auto &n : node.definitions) {
+    if (n.name.empty())
+      setError("TypeDecl missing name", node);
+    else if (!n.type)
+      setError("TypeDecl missing type", node);
+    if (n.type)
+      n.type->accept(*this);
+  }
 }
 
 void ASTValidator::visitProcedureDecl(const ProcedureDecl &node) {
+  pushScope();
   if (node.name.empty())
     setError("ProcedureDecl missing name", node);
-  else if (!node.body)
-    setError("ProcedureDecl missing body", node);
+  else {
+    declare(node.name);
+    if (!node.body)
+      setError("ProcedureDecl missing body", node);
+  }
   for (const auto &p : node.params) {
     if (!p)
       setError("Null parameter", node);
     else
       p->accept(*this);
   }
-  if (node.body)
+  if (node.body) {
+
     node.body->accept(*this);
+  }
+  popScope();
 }
 
 void ASTValidator::visitFunctionDecl(const FunctionDecl &node) {
+
+  pushScope();
+
   if (node.name.empty())
     setError("FunctionDecl missing name", node);
-  else if (!node.returnType)
-    setError("FunctionDecl missing return type", node);
-  else if (!node.body)
-    setError("FunctionDecl missing body", node);
+
+  else {
+    declare(node.name);
+    if (!node.returnType)
+
+      setError("FunctionDecl missing return type", node);
+    else if (!node.body)
+      setError("FunctionDecl missing body", node);
+  }
   for (const auto &p : node.params) {
     if (!p)
       setError("Null parameter", node);
@@ -114,8 +169,11 @@ void ASTValidator::visitFunctionDecl(const FunctionDecl &node) {
   }
   if (node.returnType)
     node.returnType->accept(*this);
-  if (node.body)
+  if (node.body) {
+
     node.body->accept(*this);
+  }
+  popScope();
 }
 
 void ASTValidator::visitCompoundStmt(const CompoundStmt &node) {
@@ -262,8 +320,12 @@ void ASTValidator::visitLiteralExpr(const LiteralExpr &node) {
 }
 
 void ASTValidator::visitVariableExpr(const VariableExpr &node) {
+
   if (node.name.empty())
     setError("VariableExpr missing name", node);
+  else if (!isDeclared(node.name))
+    setError("Undeclared identifier '" + node.name + "'", node);
+
   for (const auto &sel : node.selectors) {
     if (sel.kind == VariableExpr::Selector::Kind::Index && sel.index)
       sel.index->accept(*this);
@@ -333,6 +395,28 @@ void ASTValidator::visitDisposeExpr(const DisposeExpr &node) {
     setError("DisposeExpr missing variable", node);
   if (node.variable)
     node.variable->accept(*this);
+}
+
+// Helper functions for scope management
+
+void ASTValidator::pushScope() { m_scopes.emplace_back(); }
+
+void ASTValidator::popScope() {
+  if (!m_scopes.empty())
+    m_scopes.pop_back();
+}
+
+void ASTValidator::declare(const std::string &name) {
+  if (m_scopes.empty())
+    pushScope();
+  m_scopes.back().insert(name);
+}
+
+bool ASTValidator::isDeclared(const std::string &name) const {
+  for (auto it = m_scopes.rbegin(); it != m_scopes.rend(); ++it)
+    if (it->count(name))
+      return true;
+  return false;
 }
 
 } // namespace pascal

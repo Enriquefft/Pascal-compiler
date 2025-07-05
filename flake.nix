@@ -36,10 +36,12 @@
 
           include-what-you-use
 
+          nasm
           # Apis & crow
           ngrok
           openssl
           asio
+          ccache
 
           # raylib # nixpkgs-unstable version is outdated
           xorg.libX11

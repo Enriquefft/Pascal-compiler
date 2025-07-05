@@ -2,6 +2,7 @@
 #define PASCAL_COMPILER_AST_HPP
 
 #include "token/types.hpp"
+#include <crow/json.h>
 #include <memory>
 #include <string>
 #include <utility>
@@ -14,6 +15,7 @@ enum class NodeKind {
   Block,
   VarDecl,
   TypeDecl,
+  TypeDefinition,
   ConstDecl,
   ProcedureDecl,
   FunctionDecl,
@@ -30,6 +32,7 @@ enum class NodeKind {
   BinaryExpr,
   UnaryExpr,
   LiteralExpr,
+  VarSection,
   VariableExpr,
   Range,
   TypeSpec,
@@ -42,6 +45,77 @@ enum class NodeKind {
   DisposeExpr,
   IdentifierList
 };
+
+inline std::ostream &operator<<(std::ostream &os, const NodeKind kind) {
+  switch (kind) {
+  case NodeKind::Program:
+    return os << "Program";
+  case NodeKind::Block:
+    return os << "Block";
+  case NodeKind::VarDecl:
+    return os << "VarDecl";
+  case NodeKind::TypeDecl:
+    return os << "TypeDecl";
+  case NodeKind::TypeDefinition:
+    return os << "TypeDefinition";
+  case NodeKind::ConstDecl:
+    return os << "ConstDecl";
+  case NodeKind::ProcedureDecl:
+    return os << "ProcedureDecl";
+  case NodeKind::FunctionDecl:
+    return os << "FunctionDecl";
+  case NodeKind::ParamDecl:
+    return os << "ParamDecl";
+  case NodeKind::CompoundStmt:
+    return os << "CompoundStmt";
+  case NodeKind::AssignStmt:
+    return os << "AssignStmt";
+  case NodeKind::ProcCall:
+    return os << "ProcCall";
+  case NodeKind::IfStmt:
+    return os << "IfStmt";
+  case NodeKind::WhileStmt:
+    return os << "WhileStmt";
+  case NodeKind::ForStmt:
+    return os << "ForStmt";
+  case NodeKind::RepeatStmt:
+    return os << "RepeatStmt";
+  case NodeKind::CaseStmt:
+    return os << "CaseStmt";
+  case NodeKind::WithStmt:
+    return os << "WithStmt";
+  case NodeKind::BinaryExpr:
+    return os << "BinaryExpr";
+  case NodeKind::UnaryExpr:
+    return os << "UnaryExpr";
+  case NodeKind::LiteralExpr:
+    return os << "LiteralExpr";
+  case NodeKind::VarSection:
+    return os << "VarSection";
+  case NodeKind::VariableExpr:
+    return os << "VariableExpr";
+  case NodeKind::Range:
+    return os << "Range";
+  case NodeKind::TypeSpec:
+    return os << "TypeSpec";
+  case NodeKind::SimpleTypeSpec:
+    return os << "SimpleTypeSpec";
+  case NodeKind::ArrayTypeSpec:
+    return os << "ArrayTypeSpec";
+  case NodeKind::RecordTypeSpec:
+    return os << "RecordTypeSpec";
+  case NodeKind::PointerTypeSpec:
+    return os << "PointerTypeSpec";
+  case NodeKind::CaseLabel:
+    return os << "CaseLabel";
+  case NodeKind::NewExpr:
+    return os << "NewExpr";
+  case NodeKind::DisposeExpr:
+    return os << "DisposeExpr";
+  case NodeKind::IdentifierList:
+    return os << "IdentifierList";
+  }
+}
 
 // Forward declarations for visitor
 struct Program;
@@ -75,10 +149,14 @@ struct CaseLabel;
 struct NewExpr;
 struct DisposeExpr;
 struct IdentifierList;
+struct VarSection;
+struct TypeDefinition;
 
 class NodeVisitor {
 public:
   virtual ~NodeVisitor();
+  virtual void visitTypeDefinition(const TypeDefinition &) = 0;
+  virtual void visitVarSection(const VarSection &) = 0;
   virtual void visitProgram(const Program &) = 0;
   virtual void visitIdentifierList(const IdentifierList &) = 0;
   virtual void visitBlock(const Block &) = 0;
@@ -126,6 +204,10 @@ struct ASTNode {
   std::size_t line{0};
   std::size_t column{0};
 };
+inline std::ostream &operator<<(std::ostream &os, const ASTNode &node) {
+  return os << "ASTNode(" << node.kind << ", line: " << node.line
+            << ", column: " << node.column << ")";
+}
 
 struct Expression : ASTNode {
   using ASTNode::ASTNode;
@@ -136,8 +218,9 @@ struct Statement : ASTNode {
   using ASTNode::ASTNode;
   ~Statement() override;
 };
-
 struct Declaration : ASTNode {
+  Declaration(const Declaration &) = delete;
+  Declaration &operator=(const Declaration &) = delete;
   using ASTNode::ASTNode;
   ~Declaration() override;
 };
@@ -172,19 +255,23 @@ struct Block : ASTNode {
 struct IdentifierList : ASTNode {
   std::vector<std::string> identifiers;
   IdentifierList() : ASTNode(NodeKind::IdentifierList) {}
+
+  IdentifierList(const std::vector<std::string> &ids)
+      : ASTNode(NodeKind::IdentifierList), identifiers(ids) {}
+
   IdentifierList(const IdentifierList &) = default;
+
   IdentifierList(IdentifierList &&id_list)
       : ASTNode(NodeKind::IdentifierList),
         identifiers(std::move(id_list.identifiers)) {}
   IdentifierList &operator=(const IdentifierList &) = default;
+
   IdentifierList &operator=(IdentifierList &&id_list) {
     if (this != &id_list) {
       identifiers = std::move(id_list.identifiers);
     }
     return *this;
   }
-  explicit IdentifierList(std::vector<std::string> ids)
-      : ASTNode(NodeKind::IdentifierList), identifiers(std::move(ids)) {}
   ~IdentifierList() override;
   void accept(NodeVisitor &v) const override { v.visitIdentifierList(*this); }
 
@@ -203,7 +290,14 @@ struct VarDecl : Declaration {
   std::unique_ptr<TypeSpec> type;
 
   VarDecl();
-  VarDecl(std::vector<std::string> n, std::unique_ptr<TypeSpec> t);
+  VarDecl(IdentifierList n, std::unique_ptr<TypeSpec> t, std::size_t _line = 0,
+          std::size_t _column = 0);
+
+  VarDecl(VarDecl &&other);
+  VarDecl &operator=(VarDecl &&other);
+
+  VarDecl(const VarDecl &) = delete;
+  VarDecl &operator=(const VarDecl &) = delete;
 
   ~VarDecl() override;
 
@@ -224,11 +318,40 @@ struct ConstDecl : Declaration {
   void accept(NodeVisitor &v) const override { v.visitConstDecl(*this); }
 };
 
-struct TypeDecl : Declaration {
+struct TypeDefinition : Declaration {
   std::string name;
   std::unique_ptr<TypeSpec> type;
+  TypeDefinition();
+  TypeDefinition(TypeDefinition &&other);
+  TypeDefinition &operator=(TypeDefinition &&) = delete;
+  TypeDefinition(const TypeDefinition &) = delete;
+  TypeDefinition &operator=(const TypeDefinition &) = delete;
+  TypeDefinition(std::string n, std::unique_ptr<TypeSpec> &t);
+  ~TypeDefinition() override;
+
+  void accept(NodeVisitor &v) const override { v.visitTypeDefinition(*this); }
+};
+
+struct VarSection : Declaration {
+
+  std::vector<VarDecl> declarations;
+  VarSection() : Declaration(NodeKind::VarSection) {}
+  explicit VarSection(std::vector<VarDecl> &decls, std::size_t _line = 0,
+                      std::size_t _column = 0);
+  ~VarSection() override;
+  void accept(NodeVisitor &v) const override { v.visitVarSection(*this); }
+};
+
+struct TypeDecl : Declaration {
+
+  std::vector<TypeDefinition> definitions;
 
   TypeDecl();
+  TypeDecl(std::vector<TypeDefinition> &defs, std::size_t _line = 0,
+           std::size_t _column = 0);
+
+  TypeDecl(const TypeDecl &) = delete;
+  TypeDecl &operator=(const TypeDecl &) = delete;
   TypeDecl(std::string n, std::unique_ptr<TypeSpec> t);
 
   ~TypeDecl() override;
@@ -493,12 +616,16 @@ struct Range : ASTNode {
 
 struct TypeSpec : ASTNode {
   using ASTNode::ASTNode;
+
+  virtual size_t size() const = 0;
   ~TypeSpec() override;
 };
 
 struct SimpleTypeSpec : TypeSpec {
   BasicType basic{BasicType::Integer};
   std::string name;
+
+  size_t size() const override { return 1; }
 
   SimpleTypeSpec() : TypeSpec(NodeKind::SimpleTypeSpec) {}
   SimpleTypeSpec(BasicType b, std::string n = {})
@@ -519,6 +646,16 @@ struct ArrayTypeSpec : TypeSpec {
   ~ArrayTypeSpec() override;
 
   void accept(NodeVisitor &v) const override { v.visitArrayTypeSpec(*this); }
+
+  size_t size() const override {
+    size_t count = 1;
+    for (auto &r : ranges) {
+      auto lo = r.start;
+      auto hi = r.end;
+      count *= static_cast<size_t>(hi - lo + 1);
+    }
+    return count * elementType->size();
+  }
 };
 
 struct RecordTypeSpec : TypeSpec {
@@ -531,6 +668,15 @@ struct RecordTypeSpec : TypeSpec {
   ~RecordTypeSpec() override;
 
   void accept(NodeVisitor &v) const override { v.visitRecordTypeSpec(*this); }
+
+  size_t size() const override {
+    size_t total = 0;
+    for (auto &fieldDecl : fields) {
+      // each fieldDecl->type is a TypeSpec*
+      total += fieldDecl->type->size();
+    }
+    return total;
+  }
 };
 
 struct PointerTypeSpec : TypeSpec {
@@ -540,6 +686,8 @@ struct PointerTypeSpec : TypeSpec {
   explicit PointerTypeSpec(std::unique_ptr<TypeSpec> r);
 
   ~PointerTypeSpec() override;
+
+  size_t size() const override { return 1; }
 
   void accept(NodeVisitor &v) const override { v.visitPointerTypeSpec(*this); }
 };
@@ -593,12 +741,8 @@ inline Program::Program(std::string n, std::unique_ptr<Block> b)
     : ASTNode(NodeKind::Program), name(std::move(n)), block(std::move(b)) {}
 
 inline VarDecl::VarDecl() : Declaration(NodeKind::VarDecl) {}
-inline VarDecl::VarDecl(std::vector<std::string> n, std::unique_ptr<TypeSpec> t)
-    : Declaration(NodeKind::VarDecl), names(std::move(n)), type(std::move(t)) {}
 
 inline TypeDecl::TypeDecl() : Declaration(NodeKind::TypeDecl) {}
-inline TypeDecl::TypeDecl(std::string n, std::unique_ptr<TypeSpec> t)
-    : Declaration(NodeKind::TypeDecl), name(std::move(n)), type(std::move(t)) {}
 
 inline ProcedureDecl::ProcedureDecl() : Declaration(NodeKind::ProcedureDecl) {}
 inline ProcedureDecl::ProcedureDecl(std::string n,
@@ -612,6 +756,9 @@ inline ParamDecl::ParamDecl(std::vector<std::string> n,
                             std::unique_ptr<TypeSpec> t)
     : Declaration(NodeKind::ParamDecl), names(std::move(n)),
       type(std::move(t)) {}
+inline TypeDefinition::TypeDefinition(TypeDefinition &&other)
+    : Declaration(NodeKind::TypeDefinition), name(std::move(other.name)),
+      type(std::move(other.type)) {}
 
 inline FunctionDecl::FunctionDecl() : Declaration(NodeKind::FunctionDecl) {}
 inline FunctionDecl::FunctionDecl(std::string n,
@@ -635,6 +782,323 @@ inline CaseStmt::CaseStmt() : Statement(NodeKind::CaseStmt) {}
 inline CaseStmt::CaseStmt(std::unique_ptr<Expression> e,
                           std::vector<std::unique_ptr<CaseLabel>> c)
     : Statement(NodeKind::CaseStmt), expr(std::move(e)), cases(std::move(c)) {}
+inline TypeDecl::TypeDecl(std::vector<TypeDefinition> &defs, std::size_t _line,
+                          std::size_t _column)
+    : Declaration(NodeKind::TypeDecl, _line, _column),
+      definitions(std::move(defs)) {}
+inline TypeDefinition::TypeDefinition(std::string n,
+                                      std::unique_ptr<TypeSpec> &t)
+    : Declaration(NodeKind::TypeDefinition), name(std::move(n)),
+      type(std::move(t)) {}
+
+inline VarSection::VarSection(std::vector<VarDecl> &decls, std::size_t _line,
+                              std::size_t _column)
+    : Declaration(NodeKind::VarSection, _line, _column),
+      declarations(std::move(decls)) {}
+inline VarDecl::VarDecl(VarDecl &&other)
+    : Declaration(NodeKind::VarDecl), names(std::move(other.names)),
+      type(std::move(other.type)) {}
+inline VarDecl::VarDecl(IdentifierList n, std::unique_ptr<TypeSpec> t,
+                        std::size_t _line, std::size_t _column)
+    : Declaration(NodeKind::VarDecl, _line, _column), names(std::move(n)),
+      type(std::move(t)) {}
+
+inline TypeDefinition::TypeDefinition()
+    : Declaration(NodeKind::TypeDefinition) {}
+
+inline VarDecl &VarDecl::operator=(VarDecl &&other) {
+  if (this != &other) {
+    names = std::move(other.names);
+    type = std::move(other.type);
+  }
+  return *this;
+}
+
+#include <crow/json.h>
+
+using crow::json::wvalue;
+
+// Recursively convert any ASTNode to JSON
+static wvalue node_to_wvalue(const ASTNode *node) {
+  if (!node)
+    return wvalue::empty_object(); // {} :contentReference[oaicite:5]{index=5}
+
+  wvalue obj = wvalue::empty_object(); // initialize object
+                                       // :contentReference[oaicite:6]{index=6}
+  obj["kind"] = static_cast<int>(
+      node->kind);          // enum as int :contentReference[oaicite:7]{index=7}
+  obj["line"] = node->line; // numeric :contentReference[oaicite:8]{index=8}
+  obj["column"] = node->column; // numeric :contentReference[oaicite:9]{index=9}
+
+  switch (node->kind) {
+
+  case NodeKind::TypeDefinition: {
+    auto td = static_cast<const TypeDefinition *>(node);
+    obj["name"] = td->name; // string :contentReference[oaicite:13]{index=13}
+    obj["type"] = node_to_wvalue(td->type.get());
+    break;
+  }
+
+  case NodeKind::VarSection: {
+    auto vs = static_cast<const VarSection *>(node);
+    wvalue::list decls; // alias for std::vector<wvalue>
+                        // :contentReference[oaicite:12]{index=12}
+    for (const auto &d : vs->declarations)
+      decls.push_back(node_to_wvalue(&d));
+    obj["declarations"] = std::move(decls);
+    break;
+  }
+
+  case NodeKind::Program: {
+    auto p = static_cast<const Program *>(node);
+    obj["name"] = p->name; // string :contentReference[oaicite:10]{index=10}
+    obj["block"] = node_to_wvalue(p->block.get());
+    break;
+  }
+  case NodeKind::Block: {
+    auto b = static_cast<const Block *>(node);
+    // declarations array
+    wvalue::list decls; // alias for std::vector<wvalue>
+                        // :contentReference[oaicite:11]{index=11}
+    for (auto &d : b->declarations)
+      decls.push_back(node_to_wvalue(d.get()));
+    obj["declarations"] = std::move(decls);
+
+    // statements array
+    wvalue::list stmts;
+    for (auto &s : b->statements)
+      stmts.push_back(node_to_wvalue(s.get()));
+    obj["statements"] = std::move(stmts);
+    break;
+  }
+  case NodeKind::VarDecl: {
+    auto vd = static_cast<const VarDecl *>(node);
+    obj["names"] = node_to_wvalue(&vd->names);
+    obj["type"] = node_to_wvalue(vd->type.get());
+    break;
+  }
+  case NodeKind::ConstDecl: {
+    auto cd = static_cast<const ConstDecl *>(node);
+    obj["name"] = cd->name;
+    obj["value"] = node_to_wvalue(cd->value.get());
+    break;
+  }
+  case NodeKind::IdentifierList: {
+    auto il = static_cast<const IdentifierList *>(node);
+    wvalue::list ids;
+    for (auto &id : il->identifiers)
+      ids.push_back(id);
+    obj["identifiers"] = std::move(ids);
+    break;
+  }
+  case NodeKind::TypeDecl: {
+    auto td = static_cast<const TypeDecl *>(node);
+    wvalue::list defs;
+    for (auto &def : td->definitions) {
+      auto def_obj = node_to_wvalue(&def);
+      defs.push_back(std::move(def_obj));
+    }
+    obj["definitions"] = std::move(defs);
+    break;
+  }
+  case NodeKind::ProcedureDecl: {
+    auto pd = static_cast<const ProcedureDecl *>(node);
+    obj["name"] = pd->name;
+    wvalue::list pars;
+    for (auto &p : pd->params)
+      pars.push_back(node_to_wvalue(p.get()));
+    obj["params"] = std::move(pars);
+    obj["body"] = node_to_wvalue(pd->body.get());
+    break;
+  }
+  case NodeKind::FunctionDecl: {
+    auto fd = static_cast<const FunctionDecl *>(node);
+    obj["name"] = fd->name;
+    wvalue::list fpars;
+    for (auto &p : fd->params)
+      fpars.push_back(node_to_wvalue(p.get()));
+    obj["params"] = std::move(fpars);
+    obj["returnType"] = node_to_wvalue(fd->returnType.get());
+    obj["body"] = node_to_wvalue(fd->body.get());
+    break;
+  }
+  case NodeKind::ParamDecl: {
+    auto pd = static_cast<const ParamDecl *>(node);
+    wvalue::list names;
+    for (auto &n : pd->names)
+      names.push_back(n);
+    obj["names"] = std::move(names);
+    obj["type"] = node_to_wvalue(pd->type.get());
+    break;
+  }
+  case NodeKind::CompoundStmt: {
+    auto cs = static_cast<const CompoundStmt *>(node);
+    wvalue::list ss;
+    for (auto &s : cs->statements)
+      ss.push_back(node_to_wvalue(s.get()));
+    obj["statements"] = std::move(ss);
+    break;
+  }
+  case NodeKind::AssignStmt: {
+    auto as = static_cast<const AssignStmt *>(node);
+    obj["target"] = node_to_wvalue(as->target.get());
+    obj["value"] = node_to_wvalue(as->value.get());
+    break;
+  }
+  case NodeKind::ProcCall: {
+    auto pc = static_cast<const ProcCall *>(node);
+    obj["name"] = pc->name;
+    wvalue::list args;
+    for (auto &a : pc->args)
+      args.push_back(node_to_wvalue(a.get()));
+    obj["args"] = std::move(args);
+    break;
+  }
+  case NodeKind::IfStmt: {
+    auto iff = static_cast<const IfStmt *>(node);
+    obj["condition"] = node_to_wvalue(iff->condition.get());
+    obj["thenBranch"] = node_to_wvalue(iff->thenBranch.get());
+    if (iff->elseBranch)
+      obj["elseBranch"] = node_to_wvalue(iff->elseBranch.get());
+    break;
+  }
+  case NodeKind::WhileStmt: {
+    auto ws = static_cast<const WhileStmt *>(node);
+    obj["condition"] = node_to_wvalue(ws->condition.get());
+    obj["body"] = node_to_wvalue(ws->body.get());
+    break;
+  }
+  case NodeKind::ForStmt: {
+    auto fs = static_cast<const ForStmt *>(node);
+    obj["init"] = node_to_wvalue(fs->init.get());
+    obj["downto"] = fs->downto;
+    obj["limit"] = node_to_wvalue(fs->limit.get());
+    obj["body"] = node_to_wvalue(fs->body.get());
+    break;
+  }
+  case NodeKind::RepeatStmt: {
+    auto rs = static_cast<const RepeatStmt *>(node);
+    wvalue::list body;
+    for (auto &s : rs->body)
+      body.push_back(node_to_wvalue(s.get()));
+    obj["body"] = std::move(body);
+    obj["condition"] = node_to_wvalue(rs->condition.get());
+    break;
+  }
+  case NodeKind::CaseStmt: {
+    auto cs = static_cast<const CaseStmt *>(node);
+    obj["expr"] = node_to_wvalue(cs->expr.get());
+    wvalue::list cases;
+    for (auto &c : cs->cases)
+      cases.push_back(node_to_wvalue(c.get()));
+    obj["cases"] = std::move(cases);
+    break;
+  }
+  case NodeKind::WithStmt: {
+    auto ws = static_cast<const WithStmt *>(node);
+    obj["record"] = node_to_wvalue(ws->recordExpr.get());
+    obj["body"] = node_to_wvalue(ws->body.get());
+    break;
+  }
+  case NodeKind::BinaryExpr: {
+    auto be = static_cast<const BinaryExpr *>(node);
+    obj["left"] = node_to_wvalue(be->left.get());
+    obj["op"] = be->op;
+    obj["right"] = node_to_wvalue(be->right.get());
+    break;
+  }
+  case NodeKind::UnaryExpr: {
+    auto ue = static_cast<const UnaryExpr *>(node);
+    obj["op"] = ue->op;
+    obj["operand"] = node_to_wvalue(ue->operand.get());
+    break;
+  }
+  case NodeKind::LiteralExpr: {
+    auto le = static_cast<const LiteralExpr *>(node);
+    obj["value"] = le->value;
+    break;
+  }
+  case NodeKind::VariableExpr: {
+    auto ve = static_cast<const VariableExpr *>(node);
+    obj["name"] = ve->name;
+    wvalue::list sels;
+    for (auto &s : ve->selectors) {
+      wvalue sel = wvalue::empty_object();
+      sel["kind"] = static_cast<int>(s.kind);
+      if (s.kind == VariableExpr::Selector::Kind::Field)
+        sel["field"] = s.field;
+      else if (s.kind == VariableExpr::Selector::Kind::Index)
+        sel["index"] = node_to_wvalue(s.index.get());
+      sels.push_back(std::move(sel));
+    }
+    obj["selectors"] = std::move(sels);
+    break;
+  }
+  case NodeKind::Range: {
+    auto rg = static_cast<const Range *>(node);
+    obj["start"] = rg->start;
+    obj["end"] = rg->end;
+    break;
+  }
+  case NodeKind::SimpleTypeSpec: {
+    auto ts = static_cast<const SimpleTypeSpec *>(node);
+    obj["basic"] = static_cast<int>(ts->basic);
+    obj["name"] = ts->name;
+    break;
+  }
+  case NodeKind::ArrayTypeSpec: {
+    auto at = static_cast<const ArrayTypeSpec *>(node);
+    wvalue::list ranges;
+    for (auto &r : at->ranges)
+      ranges.push_back(node_to_wvalue(&r));
+    obj["ranges"] = std::move(ranges);
+    obj["elementType"] = node_to_wvalue(at->elementType.get());
+    break;
+  }
+  case NodeKind::RecordTypeSpec: {
+    auto rt = static_cast<const RecordTypeSpec *>(node);
+    wvalue::list fields;
+    for (auto &f : rt->fields)
+      fields.push_back(node_to_wvalue(f.get()));
+    obj["fields"] = std::move(fields);
+    break;
+  }
+  case NodeKind::PointerTypeSpec: {
+    auto pt = static_cast<const PointerTypeSpec *>(node);
+    obj["refType"] = node_to_wvalue(pt->refType.get());
+    break;
+  }
+  case NodeKind::CaseLabel: {
+    auto cl = static_cast<const CaseLabel *>(node);
+    wvalue::list consts;
+    for (auto &c : cl->constants)
+      consts.push_back(node_to_wvalue(c.get()));
+    obj["constants"] = std::move(consts);
+    obj["stmt"] = node_to_wvalue(cl->stmt.get());
+    break;
+  }
+  case NodeKind::NewExpr: {
+    auto ne = static_cast<const NewExpr *>(node);
+    obj["variable"] = node_to_wvalue(ne->variable.get());
+    break;
+  }
+  case NodeKind::DisposeExpr: {
+    auto de = static_cast<const DisposeExpr *>(node);
+    obj["variable"] = node_to_wvalue(de->variable.get());
+    break;
+  }
+  default:
+    break;
+  }
+  return obj;
+}
+
+// Public API: convert entire AST to JSON
+inline wvalue ast_to_wvalue(const AST &ast) {
+  if (!ast.valid || !ast.root)
+    return wvalue::empty_object();
+  return node_to_wvalue(ast.root.get());
+}
 
 } // namespace pascal
 

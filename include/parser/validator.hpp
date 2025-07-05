@@ -2,6 +2,7 @@
 #define PASCAL_COMPILER_VALIDATOR_HPP
 
 #include "parser/ast.hpp"
+#include <unordered_set>
 
 namespace pascal {
 
@@ -19,6 +20,8 @@ public:
   void visitProgram(const Program &node) override;
   void visitBlock(const Block &node) override;
   void visitVarDecl(const VarDecl &node) override;
+  void visitTypeDefinition(const TypeDefinition &node) override;
+  void visitVarSection(const VarSection &node) override;
   void visitParamDecl(const ParamDecl &node) override;
   void visitConstDecl(const ConstDecl &node) override;
   void visitTypeDecl(const TypeDecl &node) override;
@@ -54,6 +57,12 @@ private:
   std::string m_errorMsg{};
   std::size_t m_errorLine{0};
   std::size_t m_errorColumn{0};
+
+  std::vector<std::unordered_set<std::string>> m_scopes;
+  void pushScope();
+  void popScope();
+  void declare(const std::string &name);
+  bool isDeclared(const std::string &name) const;
 };
 
 } // namespace pascal

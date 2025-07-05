@@ -17,6 +17,8 @@ public:
   void visitProgram(const Program &node) override;
   void visitBlock(const Block &node) override;
   void visitVarDecl(const VarDecl &node) override;
+  void visitVarSection(const VarSection &node) override;
+  void visitTypeDefinition(const TypeDefinition &node) override;
   void visitParamDecl(const ParamDecl & /*node*/) override {}
   void visitConstDecl(const ConstDecl & /*node*/) override {}
   void visitTypeDecl(const TypeDecl & /*node*/) override {}

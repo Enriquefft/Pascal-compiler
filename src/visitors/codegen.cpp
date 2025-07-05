@@ -100,7 +100,18 @@ void CodeGenerator::visitBlock(const Block &node) {
 
 void CodeGenerator::visitVarDecl(const VarDecl &node) {
   for (const auto &n : node.names)
-    addVar(n, 1);
+    addVar(n, node.type->size());
+}
+
+void CodeGenerator::visitTypeDefinition(const TypeDefinition &_) {
+  // Type definitions are not directly translated to code, so we skip them.
+  // They are used for type checking and validation.
+}
+
+void CodeGenerator::visitVarSection(const VarSection &node) {
+  for (const auto &decl : node.declarations) {
+    decl.accept(*this);
+  }
 }
 
 void CodeGenerator::visitProcedureDecl(const ProcedureDecl &node) {
@@ -717,6 +728,14 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   if (!node)
     return;
   switch (node->kind) {
+
+  case NodeKind::TypeDefinition: {
+    const auto *_ = static_cast<const TypeDefinition *>(node);
+    // Type definitions are not directly translated to code, so we skip them.
+    // They are used for type checking and validation.
+    break;
+  }
+
   case NodeKind::Program: {
     const auto *p = static_cast<const Program *>(node);
     collectVars(p->block.get());
@@ -733,9 +752,19 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   case NodeKind::VarDecl: {
     const auto *vd = static_cast<const VarDecl *>(node);
     for (const auto &n : vd->names)
-      addVar(n, 1);
+      addVar(n, vd->type->size());
     break;
   }
+
+  case NodeKind::VarSection: {
+    const auto *vs = static_cast<const VarSection *>(node);
+    for (const auto &decl : vs->declarations) {
+
+      collectVars(&decl);
+    }
+    break;
+  }
+
   case NodeKind::ProcedureDecl: {
     const auto *pd = static_cast<const ProcedureDecl *>(node);
     auto savedF = m_currentFunction;
@@ -894,7 +923,11 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   }
   case NodeKind::TypeDecl: {
     const auto *td = static_cast<const TypeDecl *>(node);
-    collectVars(td->type.get());
+
+    for (const auto &tDef : td->definitions) {
+      collectVars(tDef.type.get());
+    }
+
     break;
   }
   case NodeKind::ParamDecl: {
