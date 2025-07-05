@@ -1,13 +1,18 @@
 #include "test_common.hpp"
 
 TEST(LongIntTests, Long1) {
-  std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},   {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},      {TT::Var, "var"},
-      {TT::Identifier, "l"},      {TT::Colon, ":"},
-      {TT::Identifier, "longint"}, {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},       {TT::End, "end"},
-      {TT::Dot, "."},             {TT::EndOfFile, ""}};
+  std::vector<Token> expected_tokens = {{TT::Program, "program"},
+                                        {TT::Identifier, "test"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Var, "var"},
+                                        {TT::Identifier, "l"},
+                                        {TT::Colon, ":"},
+                                        {TT::Identifier, "longint"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Begin, "begin"},
+                                        {TT::End, "end"},
+                                        {TT::Dot, "."},
+                                        {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -36,11 +41,10 @@ TEST(LongIntTests, Long1) {
 
 TEST(LongIntTests, Long2) {
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::Identifier, "l"},    {TT::Colon, ":"},     {TT::Assign, "="},
-      {TT::Number, "1"},       {TT::Semicolon, ";"}, {TT::End, "end"},
-      {TT::Dot, "."},          {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::Identifier, "l"},    {TT::Assign, ":="},
+      {TT::Number, "1"},        {TT::Semicolon, ";"},     {TT::End, "end"},
+      {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -69,13 +73,12 @@ TEST(LongIntTests, Long2) {
 
 TEST(LongIntTests, Long3) {
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::While, "while"},     {TT::Identifier, "l"}, {TT::Greater, ">"},
-      {TT::Number, "0"},        {TT::Do, "do"},        {TT::Identifier, "l"},
-      {TT::Colon, ":"},        {TT::Assign, "="},     {TT::Identifier, "l"},
-      {TT::Minus, "-"},        {TT::Number, "1"},     {TT::Semicolon, ";"},
-      {TT::End, "end"},        {TT::Dot, "."},       {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::While, "while"},     {TT::Identifier, "l"},
+      {TT::Greater, ">"},       {TT::Number, "0"},        {TT::Do, "do"},
+      {TT::Identifier, "l"},    {TT::Assign, ":="},       {TT::Identifier, "l"},
+      {TT::Minus, "-"},         {TT::Number, "1"},        {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -117,17 +120,25 @@ TEST(LongIntTests, Long3) {
 }
 
 TEST(LongIntTests, Long4) {
-  std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},     {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},        {TT::Function, "function"},
-      {TT::Identifier, "f"},        {TT::Colon, ":"},
-      {TT::Identifier, "longint"},  {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},        {TT::Identifier, "f"},
-      {TT::Colon, ":"},            {TT::Assign, "="},
-      {TT::Number, "0"},           {TT::Semicolon, ";"},
-      {TT::End, "end"},            {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},        {TT::End, "end"},
-      {TT::Dot, "."},              {TT::EndOfFile, ""}};
+  std::vector<Token> expected_tokens = {{TT::Program, "program"},
+                                        {TT::Identifier, "test"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Function, "function"},
+                                        {TT::Identifier, "f"},
+                                        {TT::Colon, ":"},
+                                        {TT::Identifier, "longint"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Begin, "begin"},
+                                        {TT::Identifier, "f"},
+                                        {TT::Assign, ":="},
+                                        {TT::Number, "0"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::End, "end"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Begin, "begin"},
+                                        {TT::End, "end"},
+                                        {TT::Dot, "."},
+                                        {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -168,14 +179,12 @@ TEST(LongIntTests, Long4) {
 
 TEST(LongIntTests, Long5) {
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::For, "for"},        {TT::Identifier, "l"}, {TT::Colon, ":"},
-      {TT::Assign, "="},       {TT::Number, "1"},     {TT::To, "to"},
-      {TT::Number, "5"},       {TT::Do, "do"},        {TT::Identifier, "l"},
-      {TT::Colon, ":"},        {TT::Assign, "="},     {TT::Identifier, "l"},
-      {TT::Semicolon, ";"},    {TT::End, "end"},      {TT::Dot, "."},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::For, "for"},         {TT::Identifier, "l"},
+      {TT::Assign, ":="},       {TT::Number, "1"},        {TT::To, "to"},
+      {TT::Number, "5"},        {TT::Do, "do"},           {TT::Identifier, "l"},
+      {TT::Assign, ":="},       {TT::Identifier, "l"},    {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -214,5 +223,3 @@ TEST(LongIntTests, Long5) {
   run_full("program test; begin for l:=1 to 5 do l:=l; end.", expected_tokens,
            expected_ast, expected_asm, expected_output);
 }
-
-

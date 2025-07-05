@@ -198,10 +198,9 @@ TEST(InvalidCodeTests, EmptyRecord) {
 TEST(InvalidCodeTests, ForMissingBody) {
   std::string input_str = "for i:=1 to 10 do ;";
   std::vector<Token> expected_tokens = {
-      {TT::For, "for"},   {TT::Identifier, "i"}, {TT::Colon, ":"},
-      {TT::Assign, "="},  {TT::Number, "1"},     {TT::To, "to"},
-      {TT::Number, "10"}, {TT::Do, "do"},        {TT::Semicolon, ";"},
-      {TT::EndOfFile, ""}};
+      {TT::For, "for"},  {TT::Identifier, "i"}, {TT::Assign, ":="},
+      {TT::Number, "1"}, {TT::To, "to"},        {TT::Number, "10"},
+      {TT::Do, "do"},    {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
 
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -293,4 +292,3 @@ TEST(InvalidCodeTests, WithMissingBody) {
   test_utils::run_validation_fail(input_str, expected_tokens, expected_ast, "",
                                   "", "WithStmt missing body");
 }
-

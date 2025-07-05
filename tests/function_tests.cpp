@@ -3,17 +3,25 @@
 TEST(FunctionTests, Func1) {
   std::string input_str =
       "program test; function f: integer; begin f:=0; end; begin end.";
-  std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},    {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},       {TT::Function, "function"},
-      {TT::Identifier, "f"},       {TT::Colon, ":"},
-      {TT::Identifier, "integer"}, {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},        {TT::Identifier, "f"},
-      {TT::Colon, ":"},            {TT::Assign, "="},
-      {TT::Number, "0"},           {TT::Semicolon, ";"},
-      {TT::End, "end"},            {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},        {TT::End, "end"},
-      {TT::Dot, "."},              {TT::EndOfFile, ""}};
+  std::vector<Token> expected_tokens = {{TT::Program, "program"},
+                                        {TT::Identifier, "test"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Function, "function"},
+                                        {TT::Identifier, "f"},
+                                        {TT::Colon, ":"},
+                                        {TT::Identifier, "integer"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Begin, "begin"},
+                                        {TT::Identifier, "f"},
+                                        {TT::Assign, ":="},
+                                        {TT::Number, "0"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::End, "end"},
+                                        {TT::Semicolon, ";"},
+                                        {TT::Begin, "begin"},
+                                        {TT::End, "end"},
+                                        {TT::Dot, "."},
+                                        {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -49,14 +57,14 @@ TEST(FunctionTests, Func1) {
 }
 
 TEST(FunctionTests, Func2) {
-  std::string input_str =
-      "program test; procedure p; begin end; begin end.";
+  std::string input_str = "program test; procedure p; begin end; begin end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},    {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},       {TT::Procedure, "procedure"},
-      {TT::Identifier, "p"},       {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},        {TT::End, "end"},      {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},        {TT::End, "end"},      {TT::Dot, "."},
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},     {TT::Procedure, "procedure"},
+      {TT::Identifier, "p"},    {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::End, "end"},
+      {TT::Semicolon, ";"},     {TT::Begin, "begin"},
+      {TT::End, "end"},         {TT::Dot, "."},
       {TT::EndOfFile, ""}};
   AST expected_ast{};
 
@@ -86,8 +94,8 @@ TEST(FunctionTests, Func2) {
 }
 
 TEST(FunctionTests, Func3) {
-  std::string input_str =
-      "program test; function g(x: integer): integer; begin g:=x; end; begin end.";
+  std::string input_str = "program test; function g(x: integer): integer; "
+                          "begin g:=x; end; begin end.";
   std::vector<Token> expected_tokens = {{TT::Program, "program"},
                                         {TT::Identifier, "test"},
                                         {TT::Semicolon, ";"},
@@ -103,8 +111,7 @@ TEST(FunctionTests, Func3) {
                                         {TT::Semicolon, ";"},
                                         {TT::Begin, "begin"},
                                         {TT::Identifier, "g"},
-                                        {TT::Colon, ":"},
-                                        {TT::Assign, "="},
+                                        {TT::Assign, ":="},
                                         {TT::Identifier, "x"},
                                         {TT::Semicolon, ";"},
                                         {TT::End, "end"},
@@ -150,5 +157,3 @@ TEST(FunctionTests, Func3) {
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
-
-

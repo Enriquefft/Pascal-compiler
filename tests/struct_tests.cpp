@@ -16,8 +16,7 @@ TEST(StructTests, Rec1) {
         std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
                                                  "integer")));
     std::vector<pascal::TypeDefinition> defs;
-    auto rec_spec =
-        std::make_unique<pascal::RecordTypeSpec>(std::move(fields));
+    auto rec_spec = std::make_unique<pascal::RecordTypeSpec>(std::move(fields));
     std::unique_ptr<pascal::TypeSpec> spec = std::move(rec_spec);
     defs.emplace_back("r", spec);
     decls.emplace_back(std::make_unique<pascal::TypeDecl>(defs));
@@ -63,9 +62,9 @@ TEST(StructTests, Rec2) {
 TEST(StructTests, Rec3) {
   std::string input_str = "v.a:=1;";
   std::vector<Token> expected_tokens = {
-      {TT::Identifier, "v"}, {TT::Dot, "."},     {TT::Identifier, "a"},
-      {TT::Colon, ":"},      {TT::Assign, "="},  {TT::Number, "1"},
-      {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
+      {TT::Identifier, "v"}, {TT::Dot, "."},    {TT::Identifier, "a"},
+      {TT::Assign, ":="},    {TT::Number, "1"}, {TT::Semicolon, ";"},
+      {TT::EndOfFile, ""}};
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
@@ -98,8 +97,8 @@ TEST(StructTests, Rec4) {
   std::string input_str = "with v do a:=2;";
   std::vector<Token> expected_tokens = {
       {TT::With, "with"},    {TT::Identifier, "v"}, {TT::Do, "do"},
-      {TT::Identifier, "a"}, {TT::Colon, ":"},      {TT::Assign, "="},
-      {TT::Number, "2"},     {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
+      {TT::Identifier, "a"}, {TT::Assign, ":="},    {TT::Number, "2"},
+      {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
@@ -129,8 +128,8 @@ TEST(StructTests, Rec5) {
       {TT::If, "if"},        {TT::Identifier, "v"}, {TT::Dot, "."},
       {TT::Identifier, "a"}, {TT::Equal, "="},      {TT::Number, "0"},
       {TT::Then, "then"},    {TT::Identifier, "v"}, {TT::Dot, "."},
-      {TT::Identifier, "a"}, {TT::Colon, ":"},      {TT::Assign, "="},
-      {TT::Number, "1"},     {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
+      {TT::Identifier, "a"}, {TT::Assign, ":="},    {TT::Number, "1"},
+      {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
@@ -171,5 +170,3 @@ TEST(StructTests, Rec5) {
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
-
-
