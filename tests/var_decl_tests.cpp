@@ -1,20 +1,27 @@
 #include "test_common.hpp"
 
 TEST(VarDeclTests, Decl1) {
-  std::string input_str = "var a: integer;";
+  std::string input_str = "program test; "
+                          "var a: integer; "
+                          "begin "
+                          "end.";
   vector<Token> expected_tokens = {
-      {TT::Var, "var"},     {TT::Identifier, "a"},
-      {TT::Colon, ":"},     {TT::Identifier, "integer"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},     {TT::Var, "var"},
+      {TT::Identifier, "a"},    {TT::Colon, ":"},
+      {TT::Identifier, "integer"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::End, "end"},
+      {TT::Dot, "."},           {TT::EndOfFile, ""}};
 
   AST expected_ast{};
 
-  // build declarations vector without initializer_list
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
-  decls.emplace_back(std::make_unique<pascal::VarDecl>(
+  std::vector<pascal::VarDecl> varDecls;
+  varDecls.emplace_back(
       std::vector<std::string>{"a"},
       std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
-                                               "integer")));
+                                               "integer"));
+  decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
 
   // empty statements vector
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
@@ -39,16 +46,26 @@ TEST(VarDeclTests, Decl1) {
 
 // Variable declarations
 TEST(VarDeclTests, Decl2) {
-  std::string input_str = "var b: real;";
+  std::string input_str = "program test; "
+                          "var b: real; "
+                          "begin "
+                          "end.";
   std::vector<Token> expected_tokens = {
-      {TT::Var, "var"},         {TT::Identifier, "b"}, {TT::Colon, ":"},
-      {TT::Identifier, "real"}, {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},     {TT::Var, "var"},
+      {TT::Identifier, "b"},    {TT::Colon, ":"},
+      {TT::Identifier, "real"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::End, "end"},
+      {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
-  decls.emplace_back(std::make_unique<pascal::VarDecl>(
-      std::vector<std::string>{"b"}, std::make_unique<pascal::SimpleTypeSpec>(
-                                         pascal::BasicType::Real, "real")));
+  std::vector<pascal::VarDecl> varDecls;
+  varDecls.emplace_back(std::vector<std::string>{"b"},
+                        std::make_unique<pascal::SimpleTypeSpec>(
+                            pascal::BasicType::Real, "real"));
+  decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
+
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
   auto block =
@@ -70,18 +87,27 @@ TEST(VarDeclTests, Decl2) {
 }
 
 TEST(VarDeclTests, Decl3) {
-  std::string input_str = "var c: unsigned;";
+  std::string input_str = "program test; "
+                          "var c: unsigned; "
+                          "begin "
+                          "end.";
   std::vector<Token> expected_tokens = {
-      {TT::Var, "var"},     {TT::Identifier, "c"},
-      {TT::Colon, ":"},     {TT::Identifier, "unsigned"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},     {TT::Var, "var"},
+      {TT::Identifier, "c"},    {TT::Colon, ":"},
+      {TT::Identifier, "unsigned"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::End, "end"},
+      {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
-  decls.emplace_back(std::make_unique<pascal::VarDecl>(
+  std::vector<pascal::VarDecl> varDecls;
+  varDecls.emplace_back(
       std::vector<std::string>{"c"},
       std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::UnsignedInt,
-                                               "unsigned")));
+                                               "unsigned"));
+  decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
+
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
   auto block =
