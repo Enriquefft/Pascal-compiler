@@ -1,13 +1,16 @@
 #include "test_common.hpp"
 
 TEST(FloatTests, Float1) {
-  std::string input_str = "var x: real; x:=1.0;";
+  std::string input_str = "program test; var x: real; begin x:=1.0; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Var, "var"},         {TT::Identifier, "x"}, {TT::Colon, ":"},
-      {TT::Identifier, "real"}, {TT::Semicolon, ";"},  {TT::Identifier, "x"},
-      {TT::Colon, ":"},         {TT::Assign, "="},     {TT::Number, "1"},
-      {TT::Dot, "."},           {TT::Number, "0"},     {TT::Semicolon, ";"},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"},  {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Var, "var"},
+      {TT::Identifier, "x"},     {TT::Colon, ":"},
+      {TT::Identifier, "real"},  {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},      {TT::Identifier, "x"},
+      {TT::Colon, ":"},          {TT::Assign, "="},     {TT::Number, "1"},
+      {TT::Dot, "."},            {TT::Number, "0"},     {TT::Semicolon, ";"},
+      {TT::End, "end"},          {TT::Dot, "."},        {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -35,12 +38,15 @@ TEST(FloatTests, Float1) {
 }
 
 TEST(FloatTests, Float2) {
-  std::string input_str = "x:=1.5+2.5;";
+  std::string input_str = "program test; begin x:=1.5+2.5; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Identifier, "x"}, {TT::Colon, ":"},     {TT::Assign, "="},
-      {TT::Number, "1"},     {TT::Dot, "."},       {TT::Number, "5"},
-      {TT::Plus, "+"},       {TT::Number, "2"},    {TT::Dot, "."},
-      {TT::Number, "5"},     {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::Identifier, "x"},   {TT::Colon, ":"},     {TT::Assign, "="},
+      {TT::Number, "1"},       {TT::Dot, "."},       {TT::Number, "5"},
+      {TT::Plus, "+"},         {TT::Number, "2"},    {TT::Dot, "."},
+      {TT::Number, "5"},       {TT::Semicolon, ";"}, {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -67,14 +73,17 @@ TEST(FloatTests, Float2) {
 }
 
 TEST(FloatTests, Float3) {
-  std::string input_str = "if 0.0 < 1.0 then x:=0.0;";
+  std::string input_str = "program test; begin if 0.0 < 1.0 then x:=0.0; end.";
   std::vector<Token> expected_tokens = {
-      {TT::If, "if"},        {TT::Number, "0"},  {TT::Dot, "."},
-      {TT::Number, "0"},     {TT::Less, "<"},    {TT::Number, "1"},
-      {TT::Dot, "."},        {TT::Number, "0"},  {TT::Then, "then"},
-      {TT::Identifier, "x"}, {TT::Colon, ":"},   {TT::Assign, "="},
-      {TT::Number, "0"},     {TT::Dot, "."},     {TT::Number, "0"},
-      {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::If, "if"},          {TT::Number, "0"},  {TT::Dot, "."},
+      {TT::Number, "0"},       {TT::Less, "<"},    {TT::Number, "1"},
+      {TT::Dot, "."},          {TT::Number, "0"},  {TT::Then, "then"},
+      {TT::Identifier, "x"},   {TT::Colon, ":"},   {TT::Assign, "="},
+      {TT::Number, "0"},       {TT::Dot, "."},     {TT::Number, "0"},
+      {TT::Semicolon, ";"},    {TT::End, "end"},    {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -103,14 +112,18 @@ TEST(FloatTests, Float3) {
 }
 
 TEST(FloatTests, Float4) {
-  std::string input_str = "while x < 1.0 do x:=x+0.1;";
+  std::string input_str =
+      "program test; begin while x < 1.0 do x:=x+0.1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::While, "while"}, {TT::Identifier, "x"}, {TT::Less, "<"},
-      {TT::Number, "1"},    {TT::Dot, "."},        {TT::Number, "0"},
-      {TT::Do, "do"},       {TT::Identifier, "x"}, {TT::Colon, ":"},
-      {TT::Assign, "="},    {TT::Identifier, "x"}, {TT::Plus, "+"},
-      {TT::Number, "0"},    {TT::Dot, "."},        {TT::Number, "1"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::While, "while"},     {TT::Identifier, "x"}, {TT::Less, "<"},
+      {TT::Number, "1"},        {TT::Dot, "."},        {TT::Number, "0"},
+      {TT::Do, "do"},           {TT::Identifier, "x"}, {TT::Colon, ":"},
+      {TT::Assign, "="},        {TT::Identifier, "x"}, {TT::Plus, "+"},
+      {TT::Number, "0"},        {TT::Dot, "."},        {TT::Number, "1"},
+      {TT::Semicolon, ";"},     {TT::End, "end"},      {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -149,13 +162,18 @@ TEST(FloatTests, Float4) {
 }
 
 TEST(FloatTests, Float5) {
-  std::string input_str = "function f: real; begin f:=0.0; end;";
+  std::string input_str =
+      "program test; function f: real; begin f:=0.0; end; begin end.";
   std::vector<Token> expected_tokens = {
-      {TT::Function, "function"}, {TT::Identifier, "f"}, {TT::Colon, ":"},
-      {TT::Identifier, "real"},   {TT::Semicolon, ";"},  {TT::Begin, "begin"},
-      {TT::Identifier, "f"},      {TT::Colon, ":"},      {TT::Assign, "="},
+      {TT::Program, "program"},   {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Function, "function"},
+      {TT::Identifier, "f"},      {TT::Colon, ":"},
+      {TT::Identifier, "real"},   {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::Identifier, "f"},
+      {TT::Colon, ":"},           {TT::Assign, "="},
       {TT::Number, "0"},          {TT::Dot, "."},        {TT::Number, "0"},
       {TT::Semicolon, ";"},       {TT::End, "end"},      {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::End, "end"},      {TT::Dot, "."},
       {TT::EndOfFile, ""}};
   AST expected_ast{};
 

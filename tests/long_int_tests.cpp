@@ -2,9 +2,12 @@
 
 TEST(LongIntTests, Long1) {
   std::vector<Token> expected_tokens = {
-      {TT::Var, "var"},     {TT::Identifier, "l"},
-      {TT::Colon, ":"},     {TT::Identifier, "longint"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"},   {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Var, "var"},
+      {TT::Identifier, "l"},      {TT::Colon, ":"},
+      {TT::Identifier, "longint"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::End, "end"},
+      {TT::Dot, "."},             {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -27,14 +30,17 @@ TEST(LongIntTests, Long1) {
                              "main:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("var l: longint;", expected_tokens, expected_ast, expected_asm,
-           expected_output);
+  run_full("program test; var l: longint; begin end.", expected_tokens,
+           expected_ast, expected_asm, expected_output);
 }
 
 TEST(LongIntTests, Long2) {
   std::vector<Token> expected_tokens = {
-      {TT::Identifier, "l"}, {TT::Colon, ":"},     {TT::Assign, "="},
-      {TT::Number, "1"},     {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::Identifier, "l"},    {TT::Colon, ":"},     {TT::Assign, "="},
+      {TT::Number, "1"},       {TT::Semicolon, ";"}, {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -57,17 +63,19 @@ TEST(LongIntTests, Long2) {
                              "    mov    qword [l], 1\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("l:=1;", expected_tokens, expected_ast, expected_asm,
-           expected_output);
+  run_full("program test; begin l:=1; end.", expected_tokens, expected_ast,
+           expected_asm, expected_output);
 }
 
 TEST(LongIntTests, Long3) {
   std::vector<Token> expected_tokens = {
-      {TT::While, "while"}, {TT::Identifier, "l"}, {TT::Greater, ">"},
-      {TT::Number, "0"},    {TT::Do, "do"},        {TT::Identifier, "l"},
-      {TT::Colon, ":"},     {TT::Assign, "="},     {TT::Identifier, "l"},
-      {TT::Minus, "-"},     {TT::Number, "1"},     {TT::Semicolon, ";"},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::While, "while"},     {TT::Identifier, "l"}, {TT::Greater, ">"},
+      {TT::Number, "0"},        {TT::Do, "do"},        {TT::Identifier, "l"},
+      {TT::Colon, ":"},        {TT::Assign, "="},     {TT::Identifier, "l"},
+      {TT::Minus, "-"},        {TT::Number, "1"},     {TT::Semicolon, ";"},
+      {TT::End, "end"},        {TT::Dot, "."},       {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -104,17 +112,22 @@ TEST(LongIntTests, Long3) {
                              "L2:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("while l>0 do l:=l-1;", expected_tokens, expected_ast, expected_asm,
-           expected_output);
+  run_full("program test; begin while l>0 do l:=l-1; end.", expected_tokens,
+           expected_ast, expected_asm, expected_output);
 }
 
 TEST(LongIntTests, Long4) {
   std::vector<Token> expected_tokens = {
-      {TT::Function, "function"},  {TT::Identifier, "f"}, {TT::Colon, ":"},
-      {TT::Identifier, "longint"}, {TT::Semicolon, ";"},  {TT::Begin, "begin"},
-      {TT::Identifier, "f"},       {TT::Colon, ":"},      {TT::Assign, "="},
-      {TT::Number, "0"},           {TT::Semicolon, ";"},  {TT::End, "end"},
-      {TT::Semicolon, ";"},        {TT::EndOfFile, ""}};
+      {TT::Program, "program"},     {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},        {TT::Function, "function"},
+      {TT::Identifier, "f"},        {TT::Colon, ":"},
+      {TT::Identifier, "longint"},  {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},        {TT::Identifier, "f"},
+      {TT::Colon, ":"},            {TT::Assign, "="},
+      {TT::Number, "0"},           {TT::Semicolon, ";"},
+      {TT::End, "end"},            {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},        {TT::End, "end"},
+      {TT::Dot, "."},              {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -149,17 +162,20 @@ TEST(LongIntTests, Long4) {
                              "main:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("function f: longint; begin f:=0; end;", expected_tokens,
-           expected_ast, expected_asm, expected_output);
+  run_full("program test; function f: longint; begin f:=0; end; begin end.",
+           expected_tokens, expected_ast, expected_asm, expected_output);
 }
 
 TEST(LongIntTests, Long5) {
   std::vector<Token> expected_tokens = {
-      {TT::For, "for"},     {TT::Identifier, "l"}, {TT::Colon, ":"},
-      {TT::Assign, "="},    {TT::Number, "1"},     {TT::To, "to"},
-      {TT::Number, "5"},    {TT::Do, "do"},        {TT::Identifier, "l"},
-      {TT::Colon, ":"},     {TT::Assign, "="},     {TT::Identifier, "l"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::For, "for"},        {TT::Identifier, "l"}, {TT::Colon, ":"},
+      {TT::Assign, "="},       {TT::Number, "1"},     {TT::To, "to"},
+      {TT::Number, "5"},       {TT::Do, "do"},        {TT::Identifier, "l"},
+      {TT::Colon, ":"},        {TT::Assign, "="},     {TT::Identifier, "l"},
+      {TT::Semicolon, ";"},    {TT::End, "end"},      {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -195,8 +211,8 @@ TEST(LongIntTests, Long5) {
                              "L2:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("for l:=1 to 5 do l:=l;", expected_tokens, expected_ast,
-           expected_asm, expected_output);
+  run_full("program test; begin for l:=1 to 5 do l:=l; end.", expected_tokens,
+           expected_ast, expected_asm, expected_output);
 }
 
 

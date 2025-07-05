@@ -1,10 +1,13 @@
 #include "test_common.hpp"
 
 TEST(DynamicTests, Dyn1) {
-  std::string input_str = "new(p);";
+  std::string input_str = "program test; begin new(p); end.";
   std::vector<Token> expected_tokens = {
-      {TT::New, "new"},      {TT::LeftParen, "("}, {TT::Identifier, "p"},
-      {TT::RightParen, ")"}, {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::New, "new"},        {TT::LeftParen, "("}, {TT::Identifier, "p"},
+      {TT::RightParen, ")"},   {TT::Semicolon, ";"}, {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -36,10 +39,13 @@ TEST(DynamicTests, Dyn1) {
 }
 
 TEST(DynamicTests, Dyn2) {
-  std::string input_str = "dispose(p);";
+  std::string input_str = "program test; begin dispose(p); end.";
   std::vector<Token> expected_tokens = {
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
       {TT::Dispose, "dispose"}, {TT::LeftParen, "("}, {TT::Identifier, "p"},
-      {TT::RightParen, ")"},    {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::RightParen, ")"},    {TT::Semicolon, ";"}, {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -70,10 +76,14 @@ TEST(DynamicTests, Dyn2) {
 }
 
 TEST(DynamicTests, Dyn3) {
-  std::string input_str = "var p:^integer;";
+  std::string input_str = "program test; var p:^integer; begin end.";
   std::vector<Token> expected_tokens = {
-      {TT::Var, "var"},   {TT::Identifier, "p"},       {TT::Colon, ":"},
-      {TT::Caret, "^"},   {TT::Identifier, "integer"}, {TT::Semicolon, ";"},
+      {TT::Program, "program"},  {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},     {TT::Var, "var"},
+      {TT::Identifier, "p"},    {TT::Colon, ":"},
+      {TT::Caret, "^"},         {TT::Identifier, "integer"},
+      {TT::Semicolon, ";"},     {TT::Begin, "begin"},
+      {TT::End, "end"},         {TT::Dot, "."},
       {TT::EndOfFile, ""}};
   AST expected_ast{};
 
@@ -101,11 +111,13 @@ TEST(DynamicTests, Dyn3) {
 }
 
 TEST(DynamicTests, Dyn4) {
-  std::string input_str = "p^:=1;";
+  std::string input_str = "program test; begin p^:=1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Identifier, "p"}, {TT::Caret, "^"},  {TT::Colon, ":"},
-      {TT::Assign, "="},     {TT::Number, "1"}, {TT::Semicolon, ";"},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::Identifier, "p"},   {TT::Caret, "^"},  {TT::Colon, ":"},
+      {TT::Assign, "="},       {TT::Number, "1"}, {TT::Semicolon, ";"},
+      {TT::End, "end"},        {TT::Dot, "."},    {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<pascal::VariableExpr::Selector> sels;
@@ -140,12 +152,16 @@ TEST(DynamicTests, Dyn4) {
 }
 
 TEST(DynamicTests, Dyn5) {
-  std::string input_str = "if p<>nil then dispose(p);";
+  std::string input_str =
+      "program test; begin if p<>nil then dispose(p); end.";
   std::vector<Token> expected_tokens = {
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
       {TT::If, "if"},           {TT::Identifier, "p"},   {TT::Less, "<"},
       {TT::Greater, ">"},       {TT::Identifier, "nil"}, {TT::Then, "then"},
       {TT::Dispose, "dispose"}, {TT::LeftParen, "("},    {TT::Identifier, "p"},
-      {TT::RightParen, ")"},    {TT::Semicolon, ";"},    {TT::EndOfFile, ""}};
+      {TT::RightParen, ")"},    {TT::Semicolon, ";"},    {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;

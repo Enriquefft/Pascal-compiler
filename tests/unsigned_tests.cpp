@@ -2,9 +2,12 @@
 
 TEST(UnsignedTests, Uns1) {
   std::vector<Token> expected_tokens = {
-      {TT::Var, "var"},     {TT::Identifier, "u"},
-      {TT::Colon, ":"},     {TT::Identifier, "unsigned"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Var, "var"},
+      {TT::Identifier, "u"},    {TT::Colon, ":"},
+      {TT::Identifier, "unsigned"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::End, "end"},
+      {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -27,14 +30,17 @@ TEST(UnsignedTests, Uns1) {
                              "main:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("var u: unsigned;", expected_tokens, expected_ast, expected_asm,
-           expected_output);
+  run_full("program test; var u: unsigned; begin end.", expected_tokens,
+           expected_ast, expected_asm, expected_output);
 }
 
 TEST(UnsignedTests, Uns2) {
   std::vector<Token> expected_tokens = {
-      {TT::Identifier, "u"}, {TT::Colon, ":"},     {TT::Assign, "="},
-      {TT::Number, "1"},     {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::Identifier, "u"},    {TT::Colon, ":"},     {TT::Assign, "="},
+      {TT::Number, "1"},       {TT::Semicolon, ";"}, {TT::End, "end"},
+      {TT::Dot, "."},          {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -57,17 +63,19 @@ TEST(UnsignedTests, Uns2) {
                              "    mov    qword [u], 1\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("u:=1;", expected_tokens, expected_ast, expected_asm,
-           expected_output);
+  run_full("program test; begin u:=1; end.", expected_tokens, expected_ast,
+           expected_asm, expected_output);
 }
 
 TEST(UnsignedTests, Uns3) {
   std::vector<Token> expected_tokens = {
-      {TT::While, "while"}, {TT::Identifier, "u"}, {TT::Greater, ">"},
-      {TT::Number, "0"},    {TT::Do, "do"},        {TT::Identifier, "u"},
-      {TT::Colon, ":"},     {TT::Assign, "="},     {TT::Identifier, "u"},
-      {TT::Minus, "-"},     {TT::Number, "1"},     {TT::Semicolon, ";"},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::While, "while"},     {TT::Identifier, "u"}, {TT::Greater, ">"},
+      {TT::Number, "0"},        {TT::Do, "do"},        {TT::Identifier, "u"},
+      {TT::Colon, ":"},        {TT::Assign, "="},     {TT::Identifier, "u"},
+      {TT::Minus, "-"},        {TT::Number, "1"},     {TT::Semicolon, ";"},
+      {TT::End, "end"},        {TT::Dot, "."},       {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -104,19 +112,22 @@ TEST(UnsignedTests, Uns3) {
                              "L2:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("while u>0 do u:=u-1;", expected_tokens, expected_ast, expected_asm,
-           expected_output);
+  run_full("program test; begin while u>0 do u:=u-1; end.", expected_tokens,
+           expected_ast, expected_asm, expected_output);
 }
 
 TEST(UnsignedTests, Uns4) {
   std::vector<Token> expected_tokens = {
-      {TT::Function, "function"}, {TT::Identifier, "f"},
-      {TT::Colon, ":"},           {TT::Identifier, "unsigned"},
-      {TT::Semicolon, ";"},       {TT::Begin, "begin"},
+      {TT::Program, "program"},   {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Function, "function"},
       {TT::Identifier, "f"},      {TT::Colon, ":"},
-      {TT::Assign, "="},          {TT::Number, "0"},
-      {TT::Semicolon, ";"},       {TT::End, "end"},
-      {TT::Semicolon, ";"},       {TT::EndOfFile, ""}};
+      {TT::Identifier, "unsigned"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::Identifier, "f"},
+      {TT::Colon, ":"},           {TT::Assign, "="},
+      {TT::Number, "0"},          {TT::Semicolon, ";"},
+      {TT::End, "end"},           {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::End, "end"},
+      {TT::Dot, "."},             {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -151,17 +162,21 @@ TEST(UnsignedTests, Uns4) {
                              "main:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("function f: unsigned; begin f:=0; end;", expected_tokens,
-           expected_ast, expected_asm, expected_output);
+  run_full(
+      "program test; function f: unsigned; begin f:=0; end; begin end.",
+      expected_tokens, expected_ast, expected_asm, expected_output);
 }
 
 TEST(UnsignedTests, Uns5) {
   std::vector<Token> expected_tokens = {
-      {TT::For, "for"},     {TT::Identifier, "u"}, {TT::Colon, ":"},
-      {TT::Assign, "="},    {TT::Number, "1"},     {TT::To, "to"},
-      {TT::Number, "5"},    {TT::Do, "do"},        {TT::Identifier, "u"},
-      {TT::Colon, ":"},     {TT::Assign, "="},     {TT::Identifier, "u"},
-      {TT::Semicolon, ";"}, {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::For, "for"},        {TT::Identifier, "u"}, {TT::Colon, ":"},
+      {TT::Assign, "="},       {TT::Number, "1"},     {TT::To, "to"},
+      {TT::Number, "5"},       {TT::Do, "do"},        {TT::Identifier, "u"},
+      {TT::Colon, ":"},        {TT::Assign, "="},     {TT::Identifier, "u"},
+      {TT::Semicolon, ";"},    {TT::End, "end"},      {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -197,8 +212,8 @@ TEST(UnsignedTests, Uns5) {
                              "L2:\n"
                              "    ret\n";
   std::string expected_output = "";
-  run_full("for u:=1 to 5 do u:=u;", expected_tokens, expected_ast,
-           expected_asm, expected_output);
+  run_full("program test; begin for u:=1 to 5 do u:=u; end.", expected_tokens,
+           expected_ast, expected_asm, expected_output);
 }
 
 
