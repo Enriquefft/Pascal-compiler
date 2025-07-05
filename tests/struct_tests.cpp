@@ -40,21 +40,41 @@ TEST(StructTests, Rec1) {
 }
 
 TEST(StructTests, Rec2) {
-  std::string input_str = "program test; var v:r; begin end.";
+  std::string input_str =
+      "program test; type r=record a:integer; end; var v:r; begin end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Var, "var"},
-      {TT::Identifier, "v"},   {TT::Colon, ":"},
-      {TT::Identifier, "r"},   {TT::Semicolon, ";"},
-      {TT::Begin, "begin"},   {TT::End, "end"},
-      {TT::Dot, "."},         {TT::EndOfFile, ""}};
+      {TT::Program, "program"},  {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Type, "type"},
+      {TT::Identifier, "r"},      {TT::Equal, "="},
+      {TT::Record, "record"},    {TT::Identifier, "a"},
+      {TT::Colon, ":"},           {TT::Identifier, "integer"},
+      {TT::Semicolon, ";"},       {TT::End, "end"},
+      {TT::Semicolon, ";"},       {TT::Var, "var"},
+      {TT::Identifier, "v"},      {TT::Colon, ":"},
+      {TT::Identifier, "r"},      {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::End, "end"},
+      {TT::Dot, "."},             {TT::EndOfFile, ""}};
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
-  std::vector<pascal::VarDecl> varDecls;
-  varDecls.emplace_back(std::vector<std::string>{"v"},
-                        std::make_unique<pascal::SimpleTypeSpec>(
-                            pascal::BasicType::Integer, "r"));
-  decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
+  {
+    std::vector<std::unique_ptr<pascal::VarDecl>> fields;
+    fields.emplace_back(std::make_unique<pascal::VarDecl>(
+        std::vector<std::string>{"a"},
+        std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
+                                                 "integer")));
+    std::vector<pascal::TypeDefinition> defs;
+    auto rec_spec = std::make_unique<pascal::RecordTypeSpec>(std::move(fields));
+    std::unique_ptr<pascal::TypeSpec> spec = std::move(rec_spec);
+    defs.emplace_back("r", spec);
+    decls.emplace_back(std::make_unique<pascal::TypeDecl>(defs));
+  }
+  {
+    std::vector<pascal::VarDecl> varDecls;
+    varDecls.emplace_back(std::vector<std::string>{"v"},
+                          std::make_unique<pascal::SimpleTypeSpec>(
+                              pascal::BasicType::Integer, "r"));
+    decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
+  }
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
   auto block =
       std::make_unique<pascal::Block>(std::move(decls), std::move(stmts));
@@ -71,17 +91,44 @@ TEST(StructTests, Rec2) {
 }
 
 TEST(StructTests, Rec3) {
-  std::string input_str = "program test; begin v.a:=1; end.";
+  std::string input_str =
+      "program test; type r=record a:integer; end; var v:r; begin v.a:=1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::Identifier, "v"},   {TT::Dot, "."},
-      {TT::Identifier, "a"},   {TT::Assign, ":="},
-      {TT::Number, "1"},       {TT::Semicolon, ";"},
-      {TT::End, "end"},        {TT::Dot, "."},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"},  {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Type, "type"},
+      {TT::Identifier, "r"},      {TT::Equal, "="},
+      {TT::Record, "record"},    {TT::Identifier, "a"},
+      {TT::Colon, ":"},           {TT::Identifier, "integer"},
+      {TT::Semicolon, ";"},       {TT::End, "end"},
+      {TT::Semicolon, ";"},       {TT::Var, "var"},
+      {TT::Identifier, "v"},      {TT::Colon, ":"},
+      {TT::Identifier, "r"},      {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::Identifier, "v"},
+      {TT::Dot, "."},             {TT::Identifier, "a"},
+      {TT::Assign, ":="},         {TT::Number, "1"},
+      {TT::Semicolon, ";"},       {TT::End, "end"},
+      {TT::Dot, "."},             {TT::EndOfFile, ""}};
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
+  {
+    std::vector<std::unique_ptr<pascal::VarDecl>> fields;
+    fields.emplace_back(std::make_unique<pascal::VarDecl>(
+        std::vector<std::string>{"a"},
+        std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
+                                                 "integer")));
+    std::vector<pascal::TypeDefinition> defs;
+    auto rec_spec = std::make_unique<pascal::RecordTypeSpec>(std::move(fields));
+    std::unique_ptr<pascal::TypeSpec> spec = std::move(rec_spec);
+    defs.emplace_back("r", spec);
+    decls.emplace_back(std::make_unique<pascal::TypeDecl>(defs));
+  }
+  {
+    std::vector<pascal::VarDecl> varDecls;
+    varDecls.emplace_back(std::vector<std::string>{"v"},
+                          std::make_unique<pascal::SimpleTypeSpec>(
+                              pascal::BasicType::Integer, "r"));
+    decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
+  }
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
   // build selector vector by emplacing, avoid copying Selector
@@ -113,17 +160,45 @@ TEST(StructTests, Rec3) {
 }
 
 TEST(StructTests, Rec4) {
-  std::string input_str = "program test; begin with v do a:=2; end.";
+  std::string input_str =
+      "program test; type r=record a:integer; end; var v:r; begin with v do a:=2; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::With, "with"},      {TT::Identifier, "v"},
-      {TT::Do, "do"},          {TT::Identifier, "a"},
-      {TT::Assign, ":="},      {TT::Number, "2"},
-      {TT::Semicolon, ";"},    {TT::End, "end"},
-      {TT::Dot, "."},          {TT::EndOfFile, ""}};
+      {TT::Program, "program"},  {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Type, "type"},
+      {TT::Identifier, "r"},      {TT::Equal, "="},
+      {TT::Record, "record"},    {TT::Identifier, "a"},
+      {TT::Colon, ":"},           {TT::Identifier, "integer"},
+      {TT::Semicolon, ";"},       {TT::End, "end"},
+      {TT::Semicolon, ";"},       {TT::Var, "var"},
+      {TT::Identifier, "v"},      {TT::Colon, ":"},
+      {TT::Identifier, "r"},      {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::With, "with"},
+      {TT::Identifier, "v"},      {TT::Do, "do"},
+      {TT::Identifier, "a"},      {TT::Assign, ":="},
+      {TT::Number, "2"},          {TT::Semicolon, ";"},
+      {TT::End, "end"},           {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
+  {
+    std::vector<std::unique_ptr<pascal::VarDecl>> fields;
+    fields.emplace_back(std::make_unique<pascal::VarDecl>(
+        std::vector<std::string>{"a"},
+        std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
+                                                 "integer")));
+    std::vector<pascal::TypeDefinition> defs;
+    auto rec_spec = std::make_unique<pascal::RecordTypeSpec>(std::move(fields));
+    std::unique_ptr<pascal::TypeSpec> spec = std::move(rec_spec);
+    defs.emplace_back("r", spec);
+    decls.emplace_back(std::make_unique<pascal::TypeDecl>(defs));
+  }
+  {
+    std::vector<pascal::VarDecl> varDecls;
+    varDecls.emplace_back(std::vector<std::string>{"v"},
+                          std::make_unique<pascal::SimpleTypeSpec>(
+                              pascal::BasicType::Integer, "r"));
+    decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
+  }
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
   stmts.emplace_back(std::make_unique<pascal::WithStmt>(
       std::make_unique<pascal::VariableExpr>("v"),
@@ -146,20 +221,48 @@ TEST(StructTests, Rec4) {
 }
 
 TEST(StructTests, Rec5) {
-  std::string input_str = "program test; begin if v.a=0 then v.a:=1; end.";
+  std::string input_str =
+      "program test; type r=record a:integer; end; var v:r; begin if v.a=0 then v.a:=1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::If, "if"},          {TT::Identifier, "v"},
-      {TT::Dot, "."},          {TT::Identifier, "a"},
-      {TT::Equal, "="},        {TT::Number, "0"},
-      {TT::Then, "then"},      {TT::Identifier, "v"},
-      {TT::Dot, "."},          {TT::Identifier, "a"},
-      {TT::Assign, ":="},      {TT::Number, "1"},
-      {TT::Semicolon, ";"},    {TT::End, "end"},
-      {TT::Dot, "."},          {TT::EndOfFile, ""}};
+      {TT::Program, "program"},  {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},      {TT::Type, "type"},
+      {TT::Identifier, "r"},      {TT::Equal, "="},
+      {TT::Record, "record"},    {TT::Identifier, "a"},
+      {TT::Colon, ":"},           {TT::Identifier, "integer"},
+      {TT::Semicolon, ";"},       {TT::End, "end"},
+      {TT::Semicolon, ";"},       {TT::Var, "var"},
+      {TT::Identifier, "v"},      {TT::Colon, ":"},
+      {TT::Identifier, "r"},      {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},       {TT::If, "if"},
+      {TT::Identifier, "v"},      {TT::Dot, "."},
+      {TT::Identifier, "a"},      {TT::Equal, "="},
+      {TT::Number, "0"},          {TT::Then, "then"},
+      {TT::Identifier, "v"},      {TT::Dot, "."},
+      {TT::Identifier, "a"},      {TT::Assign, ":="},
+      {TT::Number, "1"},          {TT::Semicolon, ";"},
+      {TT::End, "end"},           {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
+  {
+    std::vector<std::unique_ptr<pascal::VarDecl>> fields;
+    fields.emplace_back(std::make_unique<pascal::VarDecl>(
+        std::vector<std::string>{"a"},
+        std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
+                                                 "integer")));
+    std::vector<pascal::TypeDefinition> defs;
+    auto rec_spec = std::make_unique<pascal::RecordTypeSpec>(std::move(fields));
+    std::unique_ptr<pascal::TypeSpec> spec = std::move(rec_spec);
+    defs.emplace_back("r", spec);
+    decls.emplace_back(std::make_unique<pascal::TypeDecl>(defs));
+  }
+  {
+    std::vector<pascal::VarDecl> varDecls;
+    varDecls.emplace_back(std::vector<std::string>{"v"},
+                          std::make_unique<pascal::SimpleTypeSpec>(
+                              pascal::BasicType::Integer, "r"));
+    decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
+  }
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
   // build lhs1 selector in place
