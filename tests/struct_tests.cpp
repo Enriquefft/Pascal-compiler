@@ -15,8 +15,12 @@ TEST(StructTests, Rec1) {
         std::vector<std::string>{"a"},
         std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
                                                  "integer")));
-    decls.emplace_back(std::make_unique<pascal::TypeDecl>(
-        "r", std::make_unique<pascal::RecordTypeSpec>(std::move(fields))));
+    std::vector<pascal::TypeDefinition> defs;
+    auto rec_spec =
+        std::make_unique<pascal::RecordTypeSpec>(std::move(fields));
+    std::unique_ptr<pascal::TypeSpec> spec = std::move(rec_spec);
+    defs.emplace_back("r", spec);
+    decls.emplace_back(std::make_unique<pascal::TypeDecl>(defs));
   }
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
   auto block =
