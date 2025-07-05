@@ -40,6 +40,8 @@ std::string CodeGenerator::generate(const AST &ast) {
   m_paramMap.clear();
   m_strings.clear();
   m_stringMap.clear();
+  m_typeDefs.clear();
+  m_ptrSizes.clear();
   m_needMalloc = m_needFree = m_needPuts = m_needPrintf = false;
   if (ast.root) {
     collectVars(ast.root.get());
@@ -428,7 +430,11 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
   if (node.name == "new" && !node.args.empty()) {
     const auto *var = dynamic_cast<const VariableExpr *>(node.args[0].get());
     if (var) {
-      emit("    mov    rdi, 8\n");
+      size_t sz = 1;
+      auto it = m_ptrSizes.find(var->name);
+      if (it != m_ptrSizes.end())
+        sz = it->second;
+      emit("    mov    rdi, " + std::to_string(sz * 8) + "\n");
       emit("    call   malloc\n");
       emit("    mov    qword [" + var->name + "], rax\n");
     }
@@ -724,15 +730,50 @@ std::string CodeGenerator::addString(const std::string &value) {
   return label;
 }
 
+size_t CodeGenerator::typeSize(const TypeSpec *type) const {
+  if (!type)
+    return 0;
+  switch (type->kind) {
+  case NodeKind::SimpleTypeSpec: {
+    const auto *st = static_cast<const SimpleTypeSpec *>(type);
+    auto it = m_typeDefs.find(st->name);
+    if (it != m_typeDefs.end())
+      return typeSize(it->second);
+    return st->size();
+  }
+  case NodeKind::ArrayTypeSpec: {
+    const auto *at = static_cast<const ArrayTypeSpec *>(type);
+    size_t count = 1;
+    for (const auto &r : at->ranges)
+      count *= static_cast<size_t>(r.end - r.start + 1);
+    return count * typeSize(at->elementType.get());
+  }
+  case NodeKind::RecordTypeSpec: {
+    const auto *rt = static_cast<const RecordTypeSpec *>(type);
+    size_t total = 0;
+    for (const auto &f : rt->fields)
+      total += typeSize(f->type.get());
+    return total;
+  }
+  case NodeKind::PointerTypeSpec: {
+    return 1; // pointer itself
+  }
+  default:
+    return type->size();
+  }
+}
+
 void CodeGenerator::collectVars(const ASTNode *node) {
   if (!node)
     return;
   switch (node->kind) {
 
   case NodeKind::TypeDefinition: {
-    const auto *_ = static_cast<const TypeDefinition *>(node);
+    const auto *td = static_cast<const TypeDefinition *>(node);
+    m_typeDefs[td->name] = td->type.get();
     // Type definitions are not directly translated to code, so we skip them.
     // They are used for type checking and validation.
+    collectVars(td->type.get());
     break;
   }
 
@@ -751,8 +792,11 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   }
   case NodeKind::VarDecl: {
     const auto *vd = static_cast<const VarDecl *>(node);
-    for (const auto &n : vd->names)
+    for (const auto &n : vd->names) {
       addVar(n, vd->type->size());
+      if (auto *pt = dynamic_cast<const PointerTypeSpec *>(vd->type.get()))
+        m_ptrSizes[n] = typeSize(pt->refType.get());
+    }
     break;
   }
 
@@ -950,6 +994,10 @@ void CodeGenerator::collectVars(const ASTNode *node) {
   case NodeKind::ParamDecl: {
     const auto *pd = static_cast<const ParamDecl *>(node);
     collectVars(pd->type.get());
+    if (auto *pt = dynamic_cast<const PointerTypeSpec *>(pd->type.get())) {
+      for (const auto &n : pd->names)
+        m_ptrSizes[n] = typeSize(pt->refType.get());
+    }
     break;
   }
   case NodeKind::RecordTypeSpec: {

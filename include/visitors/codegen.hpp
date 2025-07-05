@@ -56,6 +56,8 @@ private:
   std::string addString(const std::string &value);
   std::string makeLabel();
 
+  size_t typeSize(const TypeSpec *type) const;
+
   std::string m_output;
   std::vector<std::pair<std::string, size_t>> m_vars;
   std::unordered_set<std::string> m_varSet;
@@ -63,6 +65,8 @@ private:
   std::unordered_map<std::string, std::string> m_paramMap;
   std::unordered_map<std::string, std::string> m_stringMap;
   std::vector<std::pair<std::string, std::string>> m_strings;
+  std::unordered_map<std::string, const TypeSpec *> m_typeDefs;
+  std::unordered_map<std::string, size_t> m_ptrSizes;
   std::string m_currentFunction;
   bool m_needMalloc{false};
   bool m_needFree{false};
