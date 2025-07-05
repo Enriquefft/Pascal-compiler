@@ -222,8 +222,7 @@ TEST(ArrayTests, Arr3) {
       "    mov    qword [i], 1\n"
       "L1:\n"
       "    mov    rax, [i]\n"
-      "    mov    rbx, 5\n"
-      "    cmp    rax, rbx\n"
+      "    cmp    rax, 5\n"
       "    jg     L2\n"
 
       "    mov    rax, [i]\n    mov    rcx, [i]\n    sub    rcx, 1\n    imul"

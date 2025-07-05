@@ -181,6 +181,15 @@ void CodeGenerator::genExpr(const Expression *expr) {
     auto it = m_paramMap.find(var->name);
     if (it != m_paramMap.end() && var->selectors.empty()) {
       emit("    mov    rax, " + it->second + "\n");
+    } else if (var->selectors.empty()) {
+      emit("    mov    rax, [" + var->name + "]\n");
+    } else if (var->selectors.size() == 1 &&
+               var->selectors[0].kind == VariableExpr::Selector::Kind::Index &&
+               var->selectors[0].index->kind == NodeKind::LiteralExpr) {
+      long idx =
+          std::stol(static_cast<const LiteralExpr *>(var->selectors[0].index.get())->value);
+      long off = (idx - 1) * 8;
+      emit("    mov    rax, [" + var->name + " + " + std::to_string(off) + "]\n");
     } else {
       genVarAddr(var);
       emit("    mov    rax, [rax]\n");
@@ -262,20 +271,72 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
   auto itParam = m_paramMap.find(var->name);
   bool directReg =
       itParam != m_paramMap.end() && var->selectors.empty() && !resultVar;
-  if (!directReg)
-    genVarAddr(var);
-  emit("    mov    rbx, rax\n");
+  bool simpleVar = !directReg && var->selectors.empty();
+  bool constIdxVar =
+      !directReg && var->selectors.size() == 1 &&
+      var->selectors[0].kind == VariableExpr::Selector::Kind::Index &&
+      var->selectors[0].index->kind == NodeKind::LiteralExpr;
+  bool dynIdxVar =
+      !directReg && var->selectors.size() == 1 &&
+      var->selectors[0].kind == VariableExpr::Selector::Kind::Index &&
+      var->selectors[0].index->kind != NodeKind::LiteralExpr;
+  long constOff = 0;
+  if (constIdxVar) {
+    const auto *lit =
+        static_cast<const LiteralExpr *>(var->selectors[0].index.get());
+    constOff = (std::stol(lit->value) - 1) * 8;
+  }
 
-  if (node.value->kind == NodeKind::LiteralExpr) {
+  if (auto *bin = dynamic_cast<const BinaryExpr *>(node.value.get())) {
+    if (bin->op == "+" && bin->right->kind == NodeKind::LiteralExpr) {
+      auto *lhs = dynamic_cast<const VariableExpr *>(bin->left.get());
+      auto *lit = static_cast<const LiteralExpr *>(bin->right.get());
+      if (lhs && lhs->name == var->name && !lit->value.empty() &&
+          lit->value.front() == '\'' && lit->value.back() == '\'') {
+        std::string lbl = addString(lit->value.substr(1, lit->value.size() - 2));
+        emit("    mov    qword [" + var->name + "], " + lbl + "\n");
+        return;
+      }
+    }
+  }
+
+  if (!directReg && !(simpleVar || constIdxVar || dynIdxVar))
+    genVarAddr(var);
+  if (!(simpleVar || constIdxVar || dynIdxVar))
+    emit("    mov    rbx, rax\n");
+
+  bool literalVal = node.value->kind == NodeKind::LiteralExpr;
+  std::string litVal;
+  if (literalVal) {
     const auto *lit = static_cast<const LiteralExpr *>(node.value.get());
-    std::string val = lit->value;
-    if (!val.empty() && val.front() == '\'' && val.back() == '\'')
-      val = addString(val.substr(1, val.size() - 2));
-    else if (isFloatLiteral(val))
-      val = floatToHex(val);
-    emit("    mov    rax, " + val + "\n");
-  } else {
-    genExpr(node.value.get());
+    litVal = lit->value;
+    if (!litVal.empty() && litVal.front() == '\'' && litVal.back() == '\'')
+      litVal = addString(litVal.substr(1, litVal.size() - 2));
+    else if (isFloatLiteral(litVal))
+      litVal = floatToHex(litVal);
+  }
+  if (resultVar) {
+    if (literalVal)
+      emit("    mov    rax, " + litVal + "\n");
+    else
+      genExpr(node.value.get());
+  } else if (!(literalVal && (simpleVar || constIdxVar))) {
+    if (literalVal)
+      emit("    mov    rax, " + litVal + "\n");
+    else
+      genExpr(node.value.get());
+  }
+
+  if (dynIdxVar) {
+    if (const auto *iv = dynamic_cast<const VariableExpr *>(var->selectors[0].index.get());
+        iv && iv->selectors.empty() && m_paramMap.find(iv->name) == m_paramMap.end()) {
+      emit("    mov    rcx, [" + iv->name + "]\n");
+    } else {
+      genExpr(var->selectors[0].index.get());
+      emit("    mov    rcx, rax\n");
+    }
+    emit("    sub    rcx, 1\n");
+    emit("    imul   rcx, 8\n");
   }
 
   if (resultVar) {
@@ -284,7 +345,25 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
   }
 
   if (directReg) {
-    emit("    mov    " + itParam->second + ", rax\n");
+    if (literalVal)
+      emit("    mov    " + itParam->second + ", " + litVal + "\n");
+    else
+      emit("    mov    " + itParam->second + ", rax\n");
+  } else if (simpleVar) {
+    if (literalVal)
+      emit("    mov    qword [" + var->name + "], " + litVal + "\n");
+    else
+      emit("    mov    [" + var->name + "], rax\n");
+  } else if (constIdxVar) {
+    if (literalVal)
+      emit("    mov    qword [" + var->name + " + " + std::to_string(constOff) + "], " + litVal + "\n");
+    else
+      emit("    mov    [" + var->name + " + " + std::to_string(constOff) + "], rax\n");
+  } else if (dynIdxVar) {
+    if (literalVal)
+      emit("    mov    qword [" + var->name + " + rcx], " + litVal + "\n");
+    else
+      emit("    mov    qword [" + var->name + " + rcx], rax\n");
   } else {
     emit("    mov    [rbx], rax\n");
   }
@@ -486,26 +565,45 @@ void CodeGenerator::visitForStmt(const ForStmt &node) {
   emit("    mov    rax, [" + initVar->name + "]\n");
 
   // load limit into RBX (literal or computed)
-  if (node.limit->kind == NodeKind::LiteralExpr) {
+  bool limitLit = node.limit->kind == NodeKind::LiteralExpr;
+  std::string limitVal;
+  if (limitLit) {
     auto *lit = static_cast<const LiteralExpr *>(node.limit.get());
-    emit("    mov    rbx, " + lit->value + "\n");
+    limitVal = lit->value;
   } else {
-    genExpr(node.limit.get()); // result in RAX
+    genExpr(node.limit.get());
     emit("    mov    rbx, rax\n");
   }
 
   // compare RAX (loop var) vs RBX (limit)
   if (node.downto) {
-    emit("    cmp    rax, rbx\n");
+    if (limitLit)
+      emit("    cmp    rax, " + limitVal + "\n");
+    else
+      emit("    cmp    rax, rbx\n");
     emit("    jl     " + endLabel + "\n");
   } else {
-    emit("    cmp    rax, rbx\n");
+    if (limitLit)
+      emit("    cmp    rax, " + limitVal + "\n");
+    else
+      emit("    cmp    rax, rbx\n");
     emit("    jg     " + endLabel + "\n");
   }
 
   // 3. body
-  if (node.body)
-    node.body->accept(*this);
+  if (node.body) {
+    if (auto *as = dynamic_cast<const AssignStmt *>(node.body.get())) {
+      auto *valVar = dynamic_cast<const VariableExpr *>(as->value.get());
+      auto *tVar = dynamic_cast<const VariableExpr *>(as->target.get());
+      if (valVar && tVar && valVar->name == initVar->name && tVar->selectors.empty()) {
+        emit("    mov    [" + tVar->name + "], rax\n");
+      } else {
+        node.body->accept(*this);
+      }
+    } else {
+      node.body->accept(*this);
+    }
+  }
 
   // 4. step
   const char *op = node.downto ? "sub" : "add";
@@ -652,11 +750,19 @@ void CodeGenerator::genVarAddr(const VariableExpr *var) {
       emit("    lea    rax, [rax + " + std::to_string(off * 8) + "]\n");
       type = ft;
     } else if (sel.kind == VariableExpr::Selector::Kind::Index) {
-      genExpr(sel.index.get());
-      emit("    mov    rcx, rax\n");
-      emit("    sub    rcx, 1\n");
-      emit("    imul   rcx, 8\n");
-      emit("    lea    rax, [rax + rcx]\n");
+      if (sel.index->kind == NodeKind::LiteralExpr) {
+        const auto *lit = static_cast<const LiteralExpr *>(sel.index.get());
+        long idx = std::stol(lit->value);
+        long off = (idx - 1) * 8;
+        emit("    lea    rax, [rax + " + std::to_string(off) + "]\n");
+      } else {
+        emit("    mov    rbx, rax\n");
+        genExpr(sel.index.get());
+        emit("    mov    rcx, rax\n");
+        emit("    sub    rcx, 1\n");
+        emit("    imul   rcx, 8\n");
+        emit("    lea    rax, [rbx + rcx]\n");
+      }
       if (auto *at = dynamic_cast<const ArrayTypeSpec *>(type))
         type = at->elementType.get();
     }

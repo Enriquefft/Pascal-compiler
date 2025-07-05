@@ -139,11 +139,16 @@ TEST(InvalidCodeTests, ParamMissingName) {
 #endif
 
 TEST(InvalidCodeTests, CaseLabelMissingStmt) {
-  std::string input_str = "case a of 1: ; end;";
+  std::string input_str = "program test; begin case a of 1: ; end; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Case, "case"}, {TT::Identifier, "a"}, {TT::Of, "of"},
-      {TT::Number, "1"},  {TT::Colon, ":"},      {TT::Semicolon, ";"},
-      {TT::End, "end"},   {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
+      {TT::Program, "program"},  {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},     {TT::Begin, "begin"},
+      {TT::Case, "case"},       {TT::Identifier, "a"},
+      {TT::Of, "of"},           {TT::Number, "1"},
+      {TT::Colon, ":"},         {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
 
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -168,10 +173,14 @@ TEST(InvalidCodeTests, CaseLabelMissingStmt) {
 }
 
 TEST(InvalidCodeTests, EmptyRecord) {
-  std::string input_str = "type R = record end;";
+  std::string input_str = "program test; type R = record end; begin end.";
   std::vector<Token> expected_tokens = {
-      {TT::Type, "type"},     {TT::Identifier, "R"}, {TT::Equal, "="},
-      {TT::Record, "record"}, {TT::End, "end"},      {TT::Semicolon, ";"},
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Type, "type"},
+      {TT::Identifier, "R"},   {TT::Equal, "="},
+      {TT::Record, "record"},  {TT::End, "end"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::End, "end"},        {TT::Dot, "."},
       {TT::EndOfFile, ""}};
 
   AST expected_ast{};
@@ -196,11 +205,16 @@ TEST(InvalidCodeTests, EmptyRecord) {
 }
 
 TEST(InvalidCodeTests, ForMissingBody) {
-  std::string input_str = "for i:=1 to 10 do ;";
+  std::string input_str = "program test; begin for i:=1 to 10 do ; end.";
   std::vector<Token> expected_tokens = {
-      {TT::For, "for"},  {TT::Identifier, "i"}, {TT::Assign, ":="},
-      {TT::Number, "1"}, {TT::To, "to"},        {TT::Number, "10"},
-      {TT::Do, "do"},    {TT::Semicolon, ";"},  {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::For, "for"},       {TT::Identifier, "i"},
+      {TT::Assign, ":="},     {TT::Number, "1"},
+      {TT::To, "to"},         {TT::Number, "10"},
+      {TT::Do, "do"},         {TT::Semicolon, ";"},
+      {TT::End, "end"},       {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
 
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -221,10 +235,14 @@ TEST(InvalidCodeTests, ForMissingBody) {
 }
 
 TEST(InvalidCodeTests, WhileMissingBody) {
-  std::string input_str = "while a>0 do ;";
+  std::string input_str = "program test; begin while a>0 do ; end.";
   std::vector<Token> expected_tokens = {
-      {TT::While, "while"}, {TT::Identifier, "a"}, {TT::Greater, ">"},
-      {TT::Number, "0"},    {TT::Do, "do"},        {TT::Semicolon, ";"},
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},   {TT::Begin, "begin"},
+      {TT::While, "while"},   {TT::Identifier, "a"},
+      {TT::Greater, ">"},    {TT::Number, "0"},
+      {TT::Do, "do"},         {TT::Semicolon, ";"},
+      {TT::End, "end"},       {TT::Dot, "."},
       {TT::EndOfFile, ""}};
 
   AST expected_ast{};
@@ -246,10 +264,14 @@ TEST(InvalidCodeTests, WhileMissingBody) {
 }
 
 TEST(InvalidCodeTests, IfMissingThenBranch) {
-  std::string input_str = "if a>0 then ;";
+  std::string input_str = "program test; begin if a>0 then ; end.";
   std::vector<Token> expected_tokens = {
-      {TT::If, "if"},     {TT::Identifier, "a"}, {TT::Greater, ">"},
-      {TT::Number, "0"},  {TT::Then, "then"},    {TT::Semicolon, ";"},
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::If, "if"},          {TT::Identifier, "a"},
+      {TT::Greater, ">"},     {TT::Number, "0"},
+      {TT::Then, "then"},     {TT::Semicolon, ";"},
+      {TT::End, "end"},       {TT::Dot, "."},
       {TT::EndOfFile, ""}};
 
   AST expected_ast{};
@@ -271,12 +293,14 @@ TEST(InvalidCodeTests, IfMissingThenBranch) {
 }
 
 TEST(InvalidCodeTests, WithMissingBody) {
-  std::string input_str = "with a do ;";
-  std::vector<Token> expected_tokens = {{TT::With, "with"},
-                                        {TT::Identifier, "a"},
-                                        {TT::Do, "do"},
-                                        {TT::Semicolon, ";"},
-                                        {TT::EndOfFile, ""}};
+  std::string input_str = "program test; begin with a do ; end.";
+  std::vector<Token> expected_tokens = {
+      {TT::Program, "program"}, {TT::Identifier, "test"},
+      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
+      {TT::With, "with"},      {TT::Identifier, "a"},
+      {TT::Do, "do"},          {TT::Semicolon, ";"},
+      {TT::End, "end"},        {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
 
   AST expected_ast{};
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
