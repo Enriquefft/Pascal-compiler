@@ -352,7 +352,6 @@ struct TypeDecl : Declaration {
 
   TypeDecl(const TypeDecl &) = delete;
   TypeDecl &operator=(const TypeDecl &) = delete;
-  TypeDecl(std::string n, std::unique_ptr<TypeSpec> t);
 
   ~TypeDecl() override;
 

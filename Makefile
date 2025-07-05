@@ -1,8 +1,8 @@
-CXX ?= clang++
+CXX = clang++
 CXX := ccache $(CXX)
 MAKEFLAGS += -j$(shell nproc)
 
-MODE ?= debug
+MODE = debug
 
 # THROW_ON_ERROR = -Werror
 THROW_ON_ERROR =

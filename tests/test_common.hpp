@@ -12,4 +12,3 @@ using std::vector;
 using test_utils::run_full;
 using test_utils::run_validation_fail;
 using TT = pascal::TokenType;
-
