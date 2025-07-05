@@ -4,8 +4,6 @@ str0: db "Pi", 0
 str1: db ":", 0
 
 section .bss
-name:    resq    1
-value:    resq    1
 p:    resq    1
 
 section .text
@@ -17,12 +15,23 @@ main:
     mov    rdi, 8
     call   malloc
     mov    qword [p], rax
-    mov    rax, [p]
-    mov    qword [rax], str0
-    mov    rax, [p]
-    mov    qword [rax], 0x40091EB851EB851F
+    lea    rax, [p]
+    mov    rax, [rax]
+    lea    rax, [rax + 0]
+    mov    rbx, rax
+    mov    rax, str0
+    mov    [rbx], rax
+    lea    rax, [p]
+    mov    rax, [rax]
+    lea    rax, [rax + 8]
+    mov    rbx, rax
+    mov    rax, 0x40091EB851EB851F
+    mov    [rbx], rax
     mov    rdi, fmt_int
-    mov    rax, [p]
+    lea    rax, [p]
+    mov    rax, [rax]
+    lea    rax, [rax + 0]
+    mov    rax, [rax]
     mov    rsi, rax
     xor    rax, rax
     call   printf

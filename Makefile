@@ -1,6 +1,6 @@
 CXX = clang++
 CXX := ccache $(CXX)
-LD_FLAGS := -fuse-ld=lld
+LD_FLAGS :=
 MAKEFLAGS += -j$(shell nproc)
 
 MODE = debug
