@@ -278,6 +278,7 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
   if (node.value->kind == NodeKind::LiteralExpr) {
     const auto *lit = static_cast<const LiteralExpr *>(node.value.get());
     std::string val = lit->value;
+
     if (!val.empty() && val.front() == '\'' && val.back() == '\'') {
       val = addString(val.substr(1, val.size() - 2));
     } else if (isFloatLiteral(val)) {

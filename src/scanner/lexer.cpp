@@ -81,9 +81,12 @@ void Lexer::scanToken() {
     addToken(TokenType::Semicolon, ";");
     break;
   case ':':
-    addToken(TokenType::Colon, ":");
-    if (match('='))
-      addToken(TokenType::Assign, "=");
+    if (match('=')) {
+      addToken(TokenType::Assign, ":=");
+    } else {
+
+      addToken(TokenType::Colon, ":");
+    }
     break;
   case '.':
     addToken(TokenType::Dot, ".");

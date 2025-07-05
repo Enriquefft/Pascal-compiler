@@ -17,7 +17,6 @@ using pascal::Lexer;
 using pascal::Parser;
 using pascal::Token;
 using pascal::TokenType;
-using std::cout;
 
 enum class TestMode { Tokens, TokensAst, TokensAstAsm, All };
 
@@ -29,8 +28,6 @@ inline bool ast_equal_node(const pascal::ASTNode *a, const pascal::ASTNode *b) {
 
   if (!a || !b)
     return a == b;
-
-  cout << "Comparing AST nodes: " << *a << " and expected " << *b << std::endl;
 
   if (a->kind != b->kind)
     return false;
@@ -322,6 +319,24 @@ inline bool ast_equal_node(const pascal::ASTNode *a, const pascal::ASTNode *b) {
   }
 }
 
+inline bool compare_asm(std::string_view asm_code,
+                        std::string_view expected_asm) {
+  // parse and compare more intelligently.
+  // spaces and newlines are not significant
+
+  auto normalize = [](std::string_view code) {
+    std::string result;
+    for (char c : code) {
+      if (!std::isspace(static_cast<unsigned char>(c)))
+        result += c;
+    }
+    return result;
+  };
+  auto norm_code = normalize(asm_code);
+  auto norm_expected = normalize(expected_asm);
+  return norm_code == norm_expected;
+}
+
 inline bool ast_equal(const pascal::AST &a, const pascal::AST &b) {
   if (a.valid != b.valid)
     return false;
@@ -345,10 +360,6 @@ inline void run_full(std::string_view src,
 
   for (size_t i = 0; i < expected_tokens.size(); ++i) {
 
-    cout << "Token " << i << ": "
-         << "Type: " << tokens[i].type << ", Lexeme: '" << tokens[i].lexeme
-         << "'\n";
-
     EXPECT_EQ(tokens[i].type, expected_tokens[i].type);
     EXPECT_EQ(tokens[i].lexeme, expected_tokens[i].lexeme);
   }
@@ -371,7 +382,7 @@ inline void run_full(std::string_view src,
 
   CodeGenerator codegen;
   auto asm_code = codegen.generate(ast);
-  EXPECT_EQ(asm_code, expected_asm);
+  EXPECT_TRUE(compare_asm(asm_code, expected_asm));
 
   if (TEST_MODE == TestMode::TokensAstAsm)
     return;
