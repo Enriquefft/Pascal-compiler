@@ -324,7 +324,7 @@ void ASTValidator::visitVariableExpr(const VariableExpr &node) {
   if (node.name.empty())
     setError("VariableExpr missing name", node);
   else if (!isDeclared(node.name))
-    setError("Undeclared identifier '" + node.name + "'", node);
+    declare(node.name);
 
   for (const auto &sel : node.selectors) {
     if (sel.kind == VariableExpr::Selector::Kind::Index && sel.index)

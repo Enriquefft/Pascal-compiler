@@ -16,10 +16,11 @@ TEST(LongIntTests, Long1) {
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
-  decls.emplace_back(std::make_unique<pascal::VarDecl>(
-      std::vector<std::string>{"l"},
-      std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::LongInt,
-                                               "longint")));
+  std::vector<pascal::VarDecl> varDecls;
+  varDecls.emplace_back(std::vector<std::string>{"l"},
+                        std::make_unique<pascal::SimpleTypeSpec>(
+                            pascal::BasicType::LongInt, "longint"));
+  decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
   auto block =

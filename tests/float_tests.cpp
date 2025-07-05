@@ -12,9 +12,11 @@ TEST(FloatTests, Float1) {
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
-  decls.emplace_back(std::make_unique<pascal::VarDecl>(
-      std::vector<std::string>{"x"}, std::make_unique<pascal::SimpleTypeSpec>(
-                                         pascal::BasicType::Real, "real")));
+  std::vector<pascal::VarDecl> varDecls;
+  varDecls.emplace_back(std::vector<std::string>{"x"},
+                        std::make_unique<pascal::SimpleTypeSpec>(
+                            pascal::BasicType::Real, "real"));
+  decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
   stmts.emplace_back(std::make_unique<pascal::AssignStmt>(
       std::make_unique<pascal::VariableExpr>("x"),

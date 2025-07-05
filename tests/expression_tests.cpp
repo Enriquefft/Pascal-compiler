@@ -12,11 +12,9 @@ TEST(ExpressionTests, Expr1) {
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
-  std::vector<std::unique_ptr<pascal::Statement>> inner;
-  inner.emplace_back(std::make_unique<pascal::AssignStmt>(
+  stmts.emplace_back(std::make_unique<pascal::AssignStmt>(
       std::make_unique<pascal::VariableExpr>("a"),
       std::make_unique<pascal::LiteralExpr>("1")));
-  stmts.emplace_back(std::make_unique<pascal::CompoundStmt>(std::move(inner)));
 
   auto block =
       std::make_unique<pascal::Block>(std::move(decls), std::move(stmts));
@@ -50,13 +48,11 @@ TEST(ExpressionTests, Expr2) {
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
-  std::vector<std::unique_ptr<pascal::Statement>> inner;
-  inner.emplace_back(std::make_unique<pascal::AssignStmt>(
+  stmts.emplace_back(std::make_unique<pascal::AssignStmt>(
       std::make_unique<pascal::VariableExpr>("b"),
       std::make_unique<pascal::BinaryExpr>(
           std::make_unique<pascal::VariableExpr>("a"), "+",
           std::make_unique<pascal::LiteralExpr>("1"))));
-  stmts.emplace_back(std::make_unique<pascal::CompoundStmt>(std::move(inner)));
 
   auto block =
       std::make_unique<pascal::Block>(std::move(decls), std::move(stmts));
@@ -93,13 +89,11 @@ TEST(ExpressionTests, Expr3) {
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
-  std::vector<std::unique_ptr<pascal::Statement>> inner;
-  inner.emplace_back(std::make_unique<pascal::AssignStmt>(
+  stmts.emplace_back(std::make_unique<pascal::AssignStmt>(
       std::make_unique<pascal::VariableExpr>("c"),
       std::make_unique<pascal::BinaryExpr>(
           std::make_unique<pascal::VariableExpr>("b"), "*",
           std::make_unique<pascal::LiteralExpr>("2"))));
-  stmts.emplace_back(std::make_unique<pascal::CompoundStmt>(std::move(inner)));
 
   auto block =
       std::make_unique<pascal::Block>(std::move(decls), std::move(stmts));

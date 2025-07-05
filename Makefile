@@ -1,5 +1,6 @@
 CXX = clang++
 CXX := ccache $(CXX)
+LD_FLAGS := -fuse-ld=lld
 MAKEFLAGS += -j$(shell nproc)
 
 MODE = debug
@@ -62,13 +63,13 @@ $(BUILD_DIR)/%.o: src/%.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LD_FLAGS) $^ -o $@
 
 compiler: $(TARGET)
 
 api: $(API_BIN)
 $(API_BIN): $(API_OBJS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LD_FLAGS) $^ -o $@
 
 ifdef FILE
 tests: clean $(TEST_BIN)
@@ -78,7 +79,7 @@ endif
 	cd tests && ./run_tests.sh $(FILTER)
 
 $(TEST_BIN): $(TEST_SRC) $(SRC_TEST) | $(BUILD_DIR)
-	$(CXX) $(NONDEPFLAGS) $(TEST_SRC) $(SRC_TEST) -lgtest -lgtest_main -lpthread -o $(TEST_BIN)
+	$(CXX) $(NONDEPFLAGS) $(LD_FLAGS) $(TEST_SRC) $(SRC_TEST) -lgtest -lgtest_main -lpthread -o $(TEST_BIN)
 
 -include $(BUILD_DIR)/**/*.d
 -include $(BUILD_DIR)/*.d

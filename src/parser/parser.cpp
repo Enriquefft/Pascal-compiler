@@ -180,13 +180,16 @@ Parser::parseDeclaration(const std::optional<TokenType> &expectedStart) {
     Token startTok = m_tokens[m_current - 1];
 
     std::vector<VarDecl> varDeclarations;
+    try {
+      varDeclarations.emplace_back(parseVarDecl());
+    } catch (const std::runtime_error &e) {
+      std::cerr << "Error parsing var declaration: " << e.what() << "\n";
+    }
     while (peek().type == TokenType::Identifier) {
       freeze();
       try {
         varDeclarations.emplace_back(parseVarDecl());
-
         pop();
-
       } catch (const std::runtime_error &e) {
         std::cerr << "Error parsing var declaration: " << e.what() << "\n";
         reset();
