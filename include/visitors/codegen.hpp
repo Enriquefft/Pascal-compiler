@@ -57,6 +57,10 @@ private:
   std::string makeLabel();
 
   size_t typeSize(const TypeSpec *type) const;
+  const TypeSpec *getVarType(const std::string &name) const;
+  size_t fieldOffset(const RecordTypeSpec *rt, const std::string &field,
+                     const TypeSpec **fieldType = nullptr) const;
+  void genVarAddr(const VariableExpr *var);
 
   std::string m_output;
   std::vector<std::pair<std::string, size_t>> m_vars;
@@ -66,6 +70,7 @@ private:
   std::unordered_map<std::string, std::string> m_stringMap;
   std::vector<std::pair<std::string, std::string>> m_strings;
   std::unordered_map<std::string, const TypeSpec *> m_typeDefs;
+  std::unordered_map<std::string, const TypeSpec *> m_varTypes;
   std::unordered_map<std::string, size_t> m_ptrSizes;
   std::string m_currentFunction;
   bool m_needMalloc{false};

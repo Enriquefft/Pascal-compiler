@@ -41,6 +41,7 @@ std::string CodeGenerator::generate(const AST &ast) {
   m_strings.clear();
   m_stringMap.clear();
   m_typeDefs.clear();
+  m_varTypes.clear();
   m_ptrSizes.clear();
   m_needMalloc = m_needFree = m_needPuts = m_needPrintf = false;
   if (ast.root) {
@@ -176,33 +177,12 @@ void CodeGenerator::genExpr(const Expression *expr) {
   }
   case NodeKind::VariableExpr: {
     const auto *var = static_cast<const VariableExpr *>(expr);
-    if (!var->selectors.empty() &&
-        var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
-      const auto &sel = var->selectors[0];
-      if (const auto *lit =
-              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
-        long idx = std::stol(lit->value);
-        long off = (idx - 1) * 8;
-        emit("    mov    rax, [" + var->name + " + " + std::to_string(off) +
-             "]\n");
-      } else if (const auto *iv =
-                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
-        auto it = m_paramMap.find(iv->name);
-        std::string reg = "rcx";
-        if (it != m_paramMap.end())
-          emit("    mov    " + reg + ", " + it->second + "\n");
-        else
-          emit("    mov    " + reg + ", [" + iv->name + "]\n");
-        emit("    sub    " + reg + ", 1\n");
-        emit("    imul   " + reg + ", 8\n");
-        emit("    mov    rax, [" + var->name + " + " + reg + "]\n");
-      }
+    auto it = m_paramMap.find(var->name);
+    if (it != m_paramMap.end() && var->selectors.empty()) {
+      emit("    mov    rax, " + it->second + "\n");
     } else {
-      auto it = m_paramMap.find(var->name);
-      if (it != m_paramMap.end())
-        emit("    mov    rax, " + it->second + "\n");
-      else
-        emit("    mov    rax, [" + var->name + "]\n");
+      genVarAddr(var);
+      emit("    mov    rax, [rax]\n");
     }
     break;
   }
@@ -276,153 +256,36 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
   const auto *var = dynamic_cast<const VariableExpr *>(node.target.get());
   if (!var)
     return;
+  bool resultVar = !m_currentFunction.empty() && var->selectors.empty() &&
+                   var->name == m_currentFunction;
+  auto itParam = m_paramMap.find(var->name);
+  bool directReg = itParam != m_paramMap.end() && var->selectors.empty() &&
+                   !resultVar;
+  if (!directReg)
+    genVarAddr(var);
+  emit("    mov    rbx, rax\n");
 
   if (node.value->kind == NodeKind::LiteralExpr) {
     const auto *lit = static_cast<const LiteralExpr *>(node.value.get());
     std::string val = lit->value;
-
-    if (!val.empty() && val.front() == '\'' && val.back() == '\'') {
+    if (!val.empty() && val.front() == '\'' && val.back() == '\'')
       val = addString(val.substr(1, val.size() - 2));
-    } else if (isFloatLiteral(val)) {
+    else if (isFloatLiteral(val))
       val = floatToHex(val);
-    }
-    if (!m_currentFunction.empty() && var->selectors.empty() &&
-        var->name == m_currentFunction) {
-      emit("    mov    rax, " + val + "\n");
-    } else if (!var->selectors.empty() &&
-               var->selectors[0].kind ==
-                   VariableExpr::Selector::Kind::Pointer) {
-      emit("    mov    rax, [" + var->name + "]\n");
-      emit("    mov    qword [rax], " + val + "\n");
-    } else if (!var->selectors.empty() &&
-               var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
-      const auto &sel = var->selectors[0];
-      if (const auto *indexLit =
-              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
-        long idx = std::stol(indexLit->value);
-        long off = (idx - 1) * 8;
-        emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
-             "], " + val + "\n");
-      } else if (const auto *iv =
-                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
-        std::string reg = "rcx";
-        auto it = m_paramMap.find(iv->name);
-        if (it != m_paramMap.end())
-          emit("    mov    " + reg + ", " + it->second + "\n");
-        else
-          emit("    mov    " + reg + ", [" + iv->name + "]\n");
-        emit("    sub    " + reg + ", 1\n");
-        emit("    imul   " + reg + ", 8\n");
-        emit("    mov    qword [" + var->name + " + " + reg + "], " + val +
-             "\n");
-      }
-    } else {
-      emit("    mov    qword [" + var->name + "], " + val + "\n");
-    }
-  } else if (node.value->kind == NodeKind::BinaryExpr) {
-    const auto *bin = static_cast<const BinaryExpr *>(node.value.get());
-    if (bin->op == "+" && bin->right->kind == NodeKind::LiteralExpr) {
-      const auto *lit = static_cast<const LiteralExpr *>(bin->right.get());
-      std::string val = lit->value;
-      if (!val.empty() && val.front() == '\'' && val.back() == '\'') {
-        val = addString(val.substr(1, val.size() - 2));
-        emit("    mov    qword [" + var->name + "], " + val + "\n");
-        return;
-      }
-    }
-    if (bin->left->kind == NodeKind::LiteralExpr &&
-        bin->right->kind == NodeKind::LiteralExpr &&
-        (isFloatLiteral(
-             static_cast<const LiteralExpr *>(bin->left.get())->value) ||
-         isFloatLiteral(
-             static_cast<const LiteralExpr *>(bin->right.get())->value))) {
-      double lhs =
-          std::stod(static_cast<const LiteralExpr *>(bin->left.get())->value);
-      double rhs =
-          std::stod(static_cast<const LiteralExpr *>(bin->right.get())->value);
-      double res = 0.0;
-      if (bin->op == "+")
-        res = lhs + rhs;
-      else if (bin->op == "-")
-        res = lhs - rhs;
-      else if (bin->op == "*")
-        res = lhs * rhs;
-      std::string val = floatToHex(res);
-      if (!m_currentFunction.empty() && var->selectors.empty() &&
-          var->name == m_currentFunction) {
-        emit("    mov    rax, " + val + "\n");
-      } else {
-        emit("    mov    qword [" + var->name + "], " + val + "\n");
-      }
-      return;
-    }
-    genExpr(node.value.get());
-    if (!m_currentFunction.empty() && var->selectors.empty() &&
-        var->name == m_currentFunction) {
-      // result already in rax
-    } else if (!var->selectors.empty() &&
-               var->selectors[0].kind ==
-                   VariableExpr::Selector::Kind::Pointer) {
-      emit("    mov    rbx, [" + var->name + "]\n");
-      emit("    mov    [rbx], rax\n");
-    } else if (!var->selectors.empty() &&
-               var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
-      const auto &sel = var->selectors[0];
-      if (const auto *lit =
-              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
-        long idx = std::stol(lit->value);
-        long off = (idx - 1) * 8;
-        emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
-             "], rax\n");
-      } else if (const auto *iv =
-                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
-        std::string reg = "rcx";
-        auto it = m_paramMap.find(iv->name);
-        if (it != m_paramMap.end())
-          emit("    mov    " + reg + ", " + it->second + "\n");
-        else
-          emit("    mov    " + reg + ", [" + iv->name + "]\n");
-        emit("    sub    " + reg + ", 1\n");
-        emit("    imul   " + reg + ", 8\n");
-        emit("    mov    qword [" + var->name + " + " + reg + "], rax\n");
-      }
-    } else {
-      emit("    mov    [" + var->name + "], rax\n");
-    }
+    emit("    mov    rax, " + val + "\n");
   } else {
     genExpr(node.value.get());
-    if (!m_currentFunction.empty() && var->selectors.empty() &&
-        var->name == m_currentFunction) {
-      // result already in rax
-    } else if (!var->selectors.empty() &&
-               var->selectors[0].kind ==
-                   VariableExpr::Selector::Kind::Pointer) {
-      emit("    mov    rbx, [" + var->name + "]\n");
-      emit("    mov    [rbx], rax\n");
-    } else if (!var->selectors.empty() &&
-               var->selectors[0].kind == VariableExpr::Selector::Kind::Index) {
-      const auto &sel = var->selectors[0];
-      if (const auto *lit =
-              dynamic_cast<const LiteralExpr *>(sel.index.get())) {
-        long idx = std::stol(lit->value);
-        long off = (idx - 1) * 8;
-        emit("    mov    qword [" + var->name + " + " + std::to_string(off) +
-             "], rax\n");
-      } else if (const auto *iv =
-                     dynamic_cast<const VariableExpr *>(sel.index.get())) {
-        std::string reg = "rcx";
-        auto it = m_paramMap.find(iv->name);
-        if (it != m_paramMap.end())
-          emit("    mov    " + reg + ", " + it->second + "\n");
-        else
-          emit("    mov    " + reg + ", [" + iv->name + "]\n");
-        emit("    sub    " + reg + ", 1\n");
-        emit("    imul   " + reg + ", 8\n");
-        emit("    mov    qword [" + var->name + " + " + reg + "], rax\n");
-      }
-    } else {
-      emit("    mov    [" + var->name + "], rax\n");
-    }
+  }
+
+  if (resultVar) {
+    // value already in rax
+    return;
+  }
+
+  if (directReg) {
+    emit("    mov    " + itParam->second + ", rax\n");
+  } else {
+    emit("    mov    [rbx], rax\n");
   }
 }
 
@@ -730,6 +593,75 @@ std::string CodeGenerator::addString(const std::string &value) {
   return label;
 }
 
+const TypeSpec *CodeGenerator::getVarType(const std::string &name) const {
+  auto it = m_varTypes.find(name);
+  if (it != m_varTypes.end())
+    return it->second;
+  return nullptr;
+}
+
+size_t CodeGenerator::fieldOffset(const RecordTypeSpec *rt,
+                                  const std::string &field,
+                                  const TypeSpec **fieldType) const {
+  size_t off = 0;
+  if (!rt)
+    return off;
+  for (const auto &f : rt->fields) {
+    for (const auto &n : f->names) {
+      if (n == field) {
+        if (fieldType)
+          *fieldType = f->type.get();
+        return off;
+      }
+    }
+    off += typeSize(f->type.get());
+  }
+  return off;
+}
+
+void CodeGenerator::genVarAddr(const VariableExpr *var) {
+  if (!var)
+    return;
+  auto it = m_paramMap.find(var->name);
+  if (it != m_paramMap.end() && var->selectors.empty()) {
+    emit("    lea    rax, [" + it->second + "]\n");
+    return;
+  }
+  emit("    lea    rax, [" + var->name + "]\n");
+  const TypeSpec *type = getVarType(var->name);
+  if (auto *st = dynamic_cast<const SimpleTypeSpec *>(type)) {
+    auto it = m_typeDefs.find(st->name);
+    if (it != m_typeDefs.end())
+      type = it->second;
+  }
+  for (const auto &sel : var->selectors) {
+    if (sel.kind == VariableExpr::Selector::Kind::Pointer) {
+      emit("    mov    rax, [rax]\n");
+      if (auto *pt = dynamic_cast<const PointerTypeSpec *>(type))
+        type = pt->refType.get();
+      if (auto *st = dynamic_cast<const SimpleTypeSpec *>(type)) {
+        auto it = m_typeDefs.find(st->name);
+        if (it != m_typeDefs.end())
+          type = it->second;
+      }
+    } else if (sel.kind == VariableExpr::Selector::Kind::Field) {
+      const auto *rt = dynamic_cast<const RecordTypeSpec *>(type);
+      const TypeSpec *ft = nullptr;
+      size_t off = fieldOffset(rt, sel.field, &ft);
+      emit("    lea    rax, [rax + " + std::to_string(off * 8) + "]\n");
+      type = ft;
+    } else if (sel.kind == VariableExpr::Selector::Kind::Index) {
+      genExpr(sel.index.get());
+      emit("    mov    rcx, rax\n");
+      emit("    sub    rcx, 1\n");
+      emit("    imul   rcx, 8\n");
+      emit("    lea    rax, [rax + rcx]\n");
+      if (auto *at = dynamic_cast<const ArrayTypeSpec *>(type))
+        type = at->elementType.get();
+    }
+  }
+}
+
 size_t CodeGenerator::typeSize(const TypeSpec *type) const {
   if (!type)
     return 0;
@@ -796,6 +728,7 @@ void CodeGenerator::collectVars(const ASTNode *node) {
       addVar(n, vd->type->size());
       if (auto *pt = dynamic_cast<const PointerTypeSpec *>(vd->type.get()))
         m_ptrSizes[n] = typeSize(pt->refType.get());
+      m_varTypes[n] = vd->type.get();
     }
     break;
   }
@@ -986,6 +919,7 @@ void CodeGenerator::collectVars(const ASTNode *node) {
     const auto *td = static_cast<const TypeDecl *>(node);
 
     for (const auto &tDef : td->definitions) {
+      m_typeDefs[tDef.name] = tDef.type.get();
       collectVars(tDef.type.get());
     }
 
@@ -998,12 +932,12 @@ void CodeGenerator::collectVars(const ASTNode *node) {
       for (const auto &n : pd->names)
         m_ptrSizes[n] = typeSize(pt->refType.get());
     }
+    for (const auto &n : pd->names)
+      m_varTypes[n] = pd->type.get();
     break;
   }
   case NodeKind::RecordTypeSpec: {
-    const auto *rt = static_cast<const RecordTypeSpec *>(node);
-    for (const auto &f : rt->fields)
-      collectVars(f.get());
+    // Record fields are handled as part of the type; no variables to collect.
     break;
   }
   case NodeKind::PointerTypeSpec: {

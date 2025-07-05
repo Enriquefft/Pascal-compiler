@@ -180,7 +180,7 @@ Parser::parseDeclaration(const std::optional<TokenType> &expectedStart) {
     Token startTok = m_tokens[m_current - 1];
 
     std::vector<VarDecl> varDeclarations;
-    while (peek().type != TokenType::Semicolon && !isAtEnd()) {
+    while (peek().type == TokenType::Identifier) {
       freeze();
       try {
         varDeclarations.emplace_back(parseVarDecl());
@@ -203,7 +203,7 @@ Parser::parseDeclaration(const std::optional<TokenType> &expectedStart) {
     Token startTok = m_tokens[m_current - 1];
 
     std::vector<TypeDefinition> typeDefs;
-    while (peek().type != TokenType::Semicolon && !isAtEnd()) {
+    while (peek().type == TokenType::Identifier) {
       freeze();
       try {
         TypeDefinition typeDef = parseTypeDecl();
