@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include <cstring>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 namespace pascal {
@@ -259,8 +260,8 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
   bool resultVar = !m_currentFunction.empty() && var->selectors.empty() &&
                    var->name == m_currentFunction;
   auto itParam = m_paramMap.find(var->name);
-  bool directReg = itParam != m_paramMap.end() && var->selectors.empty() &&
-                   !resultVar;
+  bool directReg =
+      itParam != m_paramMap.end() && var->selectors.empty() && !resultVar;
   if (!directReg)
     genVarAddr(var);
   emit("    mov    rbx, rax\n");
