@@ -1,4 +1,3 @@
-#include "executor/executor.hpp"
 #include "parser/parser.hpp"
 #include "parser/validator.hpp"
 #include "scanner/lexer.hpp"
@@ -46,9 +45,6 @@ int main(int argc, char **argv) {
   pascal::CodeGenerator codegen;
   std::string asm_code = codegen.generate(ast);
 
-  pascal::Executor exec;
-  std::string output = exec.run(asm_code);
-
-  std::cout << output;
+  std::cout << asm_code;
   return 0;
 }
