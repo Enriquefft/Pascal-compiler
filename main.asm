@@ -12,7 +12,7 @@ extern free
 extern printf
 global main
 main:
-    mov    rdi, 8
+    mov    rdi, 16
     call   malloc
     mov    qword [p], rax
     lea    rax, [p]
