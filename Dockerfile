@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      ca-certificates build-essential git libboost-all-dev libssl-dev zlib1g-dev libasio-dev wget ccache \
+      ca-certificates build-essential git libboost-all-dev libssl-dev zlib1g-dev libasio-dev wget ccache clang \
  && update-ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
