@@ -1,4 +1,4 @@
-CXX ?= g++
+CXX ?= clang++
 CXX := ccache $(CXX)
 MAKEFLAGS += -j$(shell nproc)
 

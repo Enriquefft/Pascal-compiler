@@ -7,6 +7,9 @@
 
 namespace pascal {
 
+using std::cout;
+using std::endl;
+
 namespace {
 const char *ARG_REGS[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
@@ -434,46 +437,29 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
       emit("    mov    rdi, [" + var->name + "]\n");
       emit("    call   free\n");
     }
+
   } else if (node.name == "writeln" && !node.args.empty()) {
-    if (const auto *lit =
-            dynamic_cast<const LiteralExpr *>(node.args[0].get())) {
-      if (!lit->value.empty() && lit->value.front() == '\'' &&
-          lit->value.back() == '\'') {
+    const Expression *e = node.args[0].get();
+
+    // 1) string‐literal → puts
+    if (auto *lit = dynamic_cast<const LiteralExpr *>(e)) {
+      if (lit->value.front() == '\'' && lit->value.back() == '\'') {
         std::string lbl =
             addString(lit->value.substr(1, lit->value.size() - 2));
         emit("    mov    rdi, " + lbl + "\n");
-      } else {
-        emit("    mov    rdi, fmt_int\n");
-        emit("    mov    rsi, " + lit->value + "\n");
-        emit("    xor    rax, rax\n");
-        emit("    call   printf\n");
+        emit("    call   puts\n");
         return;
       }
-    } else if (const auto *be =
-                   dynamic_cast<const BinaryExpr *>(node.args[0].get())) {
-      emit("    mov    rdi, fmt_int\n");
-      if (be->left->kind == NodeKind::LiteralExpr) {
-        const auto *ll = static_cast<const LiteralExpr *>(be->left.get());
-        emit("    mov    rsi, " + ll->value + "\n");
-      } else {
-        genExpr(be->left.get());
-        emit("    mov    rsi, rax\n");
-      }
-      if (be->right->kind == NodeKind::LiteralExpr && be->op == "+") {
-
-        const auto *beLit = static_cast<const LiteralExpr *>(be->right.get());
-
-        emit("    add    rsi, " + beLit->value + "\n");
-      }
-      emit("    xor    rax, rax\n");
-      emit("    call   printf\n");
-      return;
-    } else if (const auto *var =
-                   dynamic_cast<const VariableExpr *>(node.args[0].get())) {
-      emit("    mov    rdi, [" + var->name + "]\n");
-      emit("    call   puts\n");
-      return;
     }
+
+    // 2) everything else → printf
+    // ensure data section has fmt_int declared and extern printf emitted
+    emit("    mov    rdi, fmt_int\n");
+    genExpr(e); // result → rax
+    emit("    mov    rsi, rax\n");
+    emit("    xor    rax, rax\n"); // SysV ABI vararg count
+    emit("    call   printf\n");
+    return;
   }
 }
 
@@ -613,35 +599,48 @@ void CodeGenerator::visitWhileStmt(const WhileStmt &node) {
 }
 
 void CodeGenerator::visitForStmt(const ForStmt &node) {
+  // Labels for loop start and exit
   std::string startLabel = makeLabel();
   std::string endLabel = makeLabel();
+
+  // 1. initialize loop variable
   if (node.init)
     node.init->accept(*this);
+
+  // 2. loop header
   emit(startLabel + ":\n");
-  genExpr(node.init->target.get());
-  emit("    cmp    rax, " +
-       static_cast<const LiteralExpr *>(node.limit.get())->value + "\n");
-  emit("    jg     " + endLabel + "\n");
-  if (node.body) {
-    if (node.body->kind == NodeKind::AssignStmt) {
-      const auto *as = static_cast<const AssignStmt *>(node.body.get());
-      const auto *valVar = dynamic_cast<const VariableExpr *>(as->value.get());
-      const auto *initVar =
-          dynamic_cast<const VariableExpr *>(node.init->target.get());
-      const auto *destVar =
-          dynamic_cast<const VariableExpr *>(as->target.get());
-      if (valVar && initVar && destVar && valVar->name == initVar->name) {
-        emit("    mov    [" + destVar->name + "], rax\n");
-      } else {
-        node.body->accept(*this);
-      }
-    } else {
-      node.body->accept(*this);
-    }
+  // load loop variable into RAX
+  const auto *initVar =
+      static_cast<const VariableExpr *>(node.init->target.get());
+  emit("    mov    rax, [" + initVar->name + "]\n");
+
+  // load limit into RBX (literal or computed)
+  if (node.limit->kind == NodeKind::LiteralExpr) {
+    auto *lit = static_cast<const LiteralExpr *>(node.limit.get());
+    emit("    mov    rbx, " + lit->value + "\n");
+  } else {
+    genExpr(node.limit.get()); // result in RAX
+    emit("    mov    rbx, rax\n");
   }
-  emit("    add    qword [" +
-       static_cast<const VariableExpr *>(node.init->target.get())->name +
-       "], 1\n");
+
+  // compare RAX (loop var) vs RBX (limit)
+  if (node.downto) {
+    emit("    cmp    rax, rbx\n");
+    emit("    jl     " + endLabel + "\n");
+  } else {
+    emit("    cmp    rax, rbx\n");
+    emit("    jg     " + endLabel + "\n");
+  }
+
+  // 3. body
+  if (node.body)
+    node.body->accept(*this);
+
+  // 4. step
+  const char *op = node.downto ? "sub" : "add";
+  emit("    " + std::string(op) + "    qword [" + initVar->name + "], 1\n");
+
+  // 5. back to header
   emit("    jmp    " + startLabel + "\n");
   emit(endLabel + ":\n");
 }
@@ -877,22 +876,39 @@ void CodeGenerator::collectVars(const ASTNode *node) {
       m_needFree = true;
     else if (pc->name == "writeln") {
       if (!pc->args.empty()) {
-        if (dynamic_cast<const VariableExpr *>(pc->args[0].get())) {
-          m_needPuts = true;
-        } else if (const auto *lit =
-                       dynamic_cast<const LiteralExpr *>(pc->args[0].get())) {
+
+        // only string literals or known string vars → puts, else → printf
+        if (auto *lit = dynamic_cast<const LiteralExpr *>(pc->args[0].get())) {
+
+          // literal string?
           if (lit->value.size() >= 2 && lit->value.front() == '\'' &&
-              lit->value.back() == '\'')
+              lit->value.back() == '\'') {
             m_needPuts = true;
-          else
+          } else {
             m_needPrintf = true;
+          }
         } else {
+          // any non‐literal (variable or expr) is numeric → printf
           m_needPrintf = true;
         }
+
+      } else if (const auto *lit =
+                     dynamic_cast<const LiteralExpr *>(pc->args[0].get())) {
+
+        cout << "Literal value: " << lit->value << endl;
+
+        if (lit->value.size() >= 2 && lit->value.front() == '\'' &&
+            lit->value.back() == '\'')
+          m_needPuts = true;
+        else
+          m_needPrintf = true;
+      } else {
+        m_needPrintf = true;
       }
     }
     break;
   }
+
   case NodeKind::UnaryExpr: {
     const auto *ue = static_cast<const UnaryExpr *>(node);
     collectVars(ue->operand.get());

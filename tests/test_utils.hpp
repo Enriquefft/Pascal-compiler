@@ -27,10 +27,11 @@ inline std::string execute_stub(std::string_view /*asm_code*/) { return {}; }
 
 inline bool ast_equal_node(const pascal::ASTNode *a, const pascal::ASTNode *b) {
 
-  cout << "Comparing AST nodes: " << *a << " and expected " << *b << std::endl;
-
   if (!a || !b)
     return a == b;
+
+  cout << "Comparing AST nodes: " << *a << " and expected " << *b << std::endl;
+
   if (a->kind != b->kind)
     return false;
   using pascal::NodeKind;
