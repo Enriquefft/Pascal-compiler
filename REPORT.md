@@ -10,14 +10,11 @@ This document provides an extended overview of the codebase. It covers repositor
 
 ## Repository Organization
 
-The root `AGENTS.md` summarises the layout of important folders:
-
 - `include/` contains all header files for parser, scanner, visitors, executor, token definitions and utilities.
 - `src/` hosts the corresponding C++ source files for each module along with `main.cpp` and `api.cpp`.
 - `tests/` holds a large GoogleTest suite where each test file contains manually typed expectations for tokens, ASTs, assembly, and program output.
 - Additional directories like `libs/`, `main.asm`, `runasm.sh` and build helpers (`Makefile`, `Dockerfile`, `flake.*`) support development.
 
-These guidelines are explicitly described in the agent instructions: "Tests rely on hard‑coded expectations for tokens, AST validity, generated assembly, and execution output" and the list of subdirectories under the Project Structure Overview【F:AGENTS.md†L1-L71】.
 
 ---
 
@@ -90,21 +87,21 @@ the AST to emit instructions【F:src/visitors/codegen.cpp†L35-L50】.
 used by `printf`. Variable storage is reserved in `.bss`. The `.text` section
 includes `extern` directives for any helpers detected during collection
 (`malloc`, `free`, `puts`, `printf`). It then emits all routine bodies and the
-`main` label【F:src/visitors/codegen.cpp†L53-L97】.
+`main` label.
 
 ### Parameter Mapping & Functions
 
 Procedures and functions assign the first six parameters to registers `rdi`
 through `r9`. `visitProcedureDecl` and `visitFunctionDecl` fill `m_paramMap`,
 emit the body, and restore the previous context so nested declarations work
-properly【F:src/visitors/codegen.cpp†L122-L156】.
+properly.
 
 ### Expression Evaluation
 
 `genExpr` covers literals, variables, and binary operations. Floating literals
 are converted to hexadecimal with `floatToHex`; array indexing computes offsets
 when the selector is `[index]`; and binary expressions either constant fold or
-emit arithmetic instructions after evaluating operands【F:src/visitors/codegen.cpp†L165-L268】.
+emit arithmetic instructions after evaluating operands.
 
 ### Assignments and Built‑ins
 
@@ -112,7 +109,7 @@ emit arithmetic instructions after evaluating operands【F:src/visitors/codegen.
 slots. String literals go through `addString` which deduplicates them in the
 data section. `visitProcCall` recognizes the built‑in `new`, `dispose` and
 `writeln` routines, generating calls to `malloc`, `free` or either `puts` or
-`printf` respectively【F:src/visitors/codegen.cpp†L275-L469】.
+`printf` respectively.
 
 ### Control Flow
 
@@ -146,7 +143,7 @@ The frontend displays tokens, AST as a tree visualization, generated assembly, a
 
 ## Testing Strategy
 
-The project relies on extensive GoogleTest suites located under `tests/`. According to `AGENTS.md`, each test manually specifies the expected tokens, AST structure, generated assembly, and output. This approach allows deterministic comparison but requires significant boilerplate for every test case. Tests can be run with `make tests` or for individual files via `make tests FILE=name.cpp`【F:AGENTS.md†L40-L59】.
+The project relies on extensive GoogleTest suites located under `tests/`, each test manually specifies the expected tokens, AST structure, generated assembly, and output. This approach allows deterministic comparison but requires significant boilerplate for every test case. Tests can be run with `make tests` or for individual files via `make tests FILE=name.cpp`.
 
 Running the full test suite in the provided environment leads to several failures, producing assertions and an AddressSanitizer error as shown in the truncated logs:
 
@@ -160,11 +157,9 @@ Expected equality of these values:
 ==7993==ABORTING
 make: *** [Makefile:78: tests] Error 1
 ```
-【c64057†L1-L72】
 
 ---
 
 ## Conclusion
 
 This codebase demonstrates how to build a simple Pascal compiler and expose it via both a command line interface and an HTTP API. The compiler features a multi-stage pipeline: tokenization, recursive descent parsing with backtracking assistance, AST validation with scoped symbol tracking, and x86 assembly generation. A Next.js frontend enables users to experiment with Pascal snippets in the browser. Although the executor is currently a stub and tests fail in this environment, the project lays a solid foundation for further enhancements such as full runtime integration, richer type checking, and extended language support.
-
