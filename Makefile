@@ -29,7 +29,7 @@ OPT = -ggdb3 $(SANITIZE)
 endif
 
 DEPFLAGS = -MMD -MP
-CXXFLAGS = -std=c++23 $(WARN) $(OPT) $(DEPFLAGS) -Iinclude -Isrc
+CXXFLAGS = -std=c++20 $(WARN) $(OPT) $(DEPFLAGS) -Iinclude -Isrc
 NONDEPFLAGS = $(filter-out $(DEPFLAGS),$(CXXFLAGS))
 
 SRC_ALL := $(wildcard src/*.cpp src/token/*.cpp src/scanner/*.cpp \
