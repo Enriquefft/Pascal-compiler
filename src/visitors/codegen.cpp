@@ -272,6 +272,8 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
   bool directReg =
       itParam != m_paramMap.end() && var->selectors.empty() && !resultVar;
   bool simpleVar = !directReg && var->selectors.empty();
+  bool ptrDeref = !directReg && var->selectors.size() == 1 &&
+                   var->selectors[0].kind == VariableExpr::Selector::Kind::Pointer;
   bool constIdxVar =
       !directReg && var->selectors.size() == 1 &&
       var->selectors[0].kind == VariableExpr::Selector::Kind::Index &&
@@ -300,9 +302,30 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
     }
   }
 
-  if (!directReg && !(simpleVar || constIdxVar || dynIdxVar))
+  bool foldedFloat = false;
+  std::string foldedVal;
+  if (auto *bin = dynamic_cast<const BinaryExpr *>(node.value.get())) {
+    if (bin->left->kind == NodeKind::LiteralExpr &&
+        bin->right->kind == NodeKind::LiteralExpr &&
+        (isFloatLiteral(static_cast<const LiteralExpr *>(bin->left.get())->value) ||
+         isFloatLiteral(static_cast<const LiteralExpr *>(bin->right.get())->value))) {
+      double lhs = std::stod(static_cast<const LiteralExpr *>(bin->left.get())->value);
+      double rhs = std::stod(static_cast<const LiteralExpr *>(bin->right.get())->value);
+      double res = 0.0;
+      if (bin->op == "+")
+        res = lhs + rhs;
+      else if (bin->op == "-")
+        res = lhs - rhs;
+      else if (bin->op == "*")
+        res = lhs * rhs;
+      foldedVal = floatToHex(res);
+      foldedFloat = true;
+    }
+  }
+
+  if (!directReg && !(simpleVar || constIdxVar || dynIdxVar || ptrDeref))
     genVarAddr(var);
-  if (!(simpleVar || constIdxVar || dynIdxVar))
+  if (!(simpleVar || constIdxVar || dynIdxVar || ptrDeref))
     emit("    mov    rbx, rax\n");
 
   bool literalVal = node.value->kind == NodeKind::LiteralExpr;
@@ -314,13 +337,16 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
       litVal = addString(litVal.substr(1, litVal.size() - 2));
     else if (isFloatLiteral(litVal))
       litVal = floatToHex(litVal);
+  } else if (foldedFloat) {
+    literalVal = true;
+    litVal = foldedVal;
   }
   if (resultVar) {
     if (literalVal)
       emit("    mov    rax, " + litVal + "\n");
     else
       genExpr(node.value.get());
-  } else if (!(literalVal && (simpleVar || constIdxVar))) {
+  } else if (!(literalVal && (simpleVar || constIdxVar || ptrDeref))) {
     if (literalVal)
       emit("    mov    rax, " + litVal + "\n");
     else
@@ -337,6 +363,25 @@ void CodeGenerator::visitAssignStmt(const AssignStmt &node) {
     }
     emit("    sub    rcx, 1\n");
     emit("    imul   rcx, 8\n");
+  }
+
+  if (ptrDeref) {
+    if (literalVal) {
+      if (itParam != m_paramMap.end())
+        emit("    mov    rax, " + itParam->second + "\n");
+      else
+        emit("    mov    rax, [" + var->name + "]\n");
+      emit("    mov    qword [rax], " + litVal + "\n");
+    } else {
+      genExpr(node.value.get());
+      emit("    mov    rbx, rax\n");
+      if (itParam != m_paramMap.end())
+        emit("    mov    rax, " + itParam->second + "\n");
+      else
+        emit("    mov    rax, [" + var->name + "]\n");
+      emit("    mov    qword [rax], rbx\n");
+    }
+    return;
   }
 
   if (resultVar) {
@@ -391,7 +436,7 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
   } else if (node.name == "writeln" && !node.args.empty()) {
     const Expression *e = node.args[0].get();
 
-    // 1) string‐literal → puts
+    // 1) string-literal → puts
     if (auto *lit = dynamic_cast<const LiteralExpr *>(e)) {
       if (lit->value.front() == '\'' && lit->value.back() == '\'') {
         std::string lbl =
@@ -400,6 +445,14 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
         emit("    call   puts\n");
         return;
       }
+      std::string val = lit->value;
+      if (isFloatLiteral(val))
+        val = floatToHex(val);
+      emit("    mov    rdi, fmt_int\n");
+      emit("    mov    rsi, " + val + "\n");
+      emit("    xor    rax, rax\n");
+      emit("    call   printf\n");
+      return;
     }
 
     // 2) everything else → printf

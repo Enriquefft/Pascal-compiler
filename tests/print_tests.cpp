@@ -129,8 +129,9 @@ TEST(PrintTests, PrintIntExpr) {
                              "global main\n"
                              "main:\n"
                              "    mov    rdi, fmt_int\n"
-                             "    mov    rsi, 10\n"
-                             "    add    rsi, 20\n"
+                             "    mov    rax, 10\n"
+                             "    add    rax, 20\n"
+                             "    mov    rsi, rax\n"
                              "    xor    rax, rax\n"
                              "    call   printf\n"
                              "    ret\n";

@@ -86,11 +86,12 @@ TEST(DynamicTests, Dyn3) {
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
-  decls.emplace_back(std::make_unique<pascal::VarDecl>(
-      std::vector<std::string>{"p"},
-      std::make_unique<pascal::PointerTypeSpec>(
-          std::make_unique<pascal::SimpleTypeSpec>(pascal::BasicType::Integer,
-                                                   "integer"))));
+  std::vector<pascal::VarDecl> varDecls;
+  varDecls.emplace_back(std::vector<std::string>{"p"},
+                        std::make_unique<pascal::PointerTypeSpec>(
+                            std::make_unique<pascal::SimpleTypeSpec>(
+                                pascal::BasicType::Integer, "integer")));
+  decls.emplace_back(std::make_unique<pascal::VarSection>(varDecls));
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
 
   auto block =
