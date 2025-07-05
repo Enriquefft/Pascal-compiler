@@ -5,6 +5,8 @@
 #include "scanner/lexer.hpp"
 #include "visitors/codegen.hpp"
 #include <cctype>
+#include <filesystem>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <string_view>
 #include <vector>
@@ -20,9 +22,66 @@ using pascal::TokenType;
 
 enum class TestMode { Tokens, TokensAst, TokensAstAsm, All };
 
-inline constexpr TestMode TEST_MODE = TestMode::TokensAstAsm;
+inline constexpr TestMode TEST_MODE = TestMode::All;
 
-inline std::string execute_stub(std::string_view /*asm_code*/) { return {}; }
+struct RunCommand {
+  int code;
+  std::string output;
+};
+inline RunCommand run_command(const std::string &cmd) {
+  std::array<char, 128> buffer;
+  std::string result;
+  FILE *pipe = popen((cmd + " 2>&1").c_str(), "r");
+  if (!pipe)
+    throw std::system_error(errno, std::generic_category(), "popen failed");
+  while (fgets(buffer.data(), buffer.size(), pipe))
+    result += buffer.data();
+  int rc = pclose(pipe);
+  return {WEXITSTATUS(rc), result};
+}
+
+inline std::string execute_stub(std::string_view asm_code) {
+  namespace fs = std::filesystem;
+
+  // 1. Prepare temporary filenames
+  fs::path dir = fs::temp_directory_path();
+  fs::path asm_file = dir / fs::path("temp.asm");
+  fs::path obj_file = asm_file;
+  obj_file.replace_extension(".o");
+  fs::path bin_file = asm_file;
+  bin_file.replace_extension(); // no extension
+
+  // 2. Emit the .note.GNU-stack directive to avoid executable-stack warning
+  std::ofstream out{asm_file};
+  out << "section .note.GNU-stack,\"\",@progbits\n";
+  out << asm_code;
+  out.close();
+
+  // 3. Assemble
+  auto r = run_command("nasm -felf64 " + asm_file.string() + " -o " +
+                       obj_file.string());
+  if (r.code != 0)
+    return "Assemble error:\n" + r.output;
+
+  // 4. Link with non-executable stack
+  r = run_command("gcc " + obj_file.string() + " -o " + bin_file.string() +
+                  " -Wl,-z,noexecstack");
+  if (r.code != 0)
+    return "Link error:\n" + r.output;
+
+  // 5. Execute and capture stdout/stderr
+  r = run_command(bin_file.string());
+  if (r.code != 0)
+    return "Execution failed (code " + std::to_string(r.code) + "):\n" +
+           r.output;
+
+  // 6. Clean up
+  fs::remove(asm_file);
+  fs::remove(obj_file);
+  fs::remove(bin_file);
+
+  return r.output;
+}
 
 inline bool ast_equal_node(const pascal::ASTNode *a, const pascal::ASTNode *b) {
 
