@@ -1,5 +1,5 @@
-CXX = clang++
-CXX := ccache $(CXX)
+CXX = g++
+CXX := $(CXX)
 LD_FLAGS :=
 MAKEFLAGS += -j$(shell nproc)
 
