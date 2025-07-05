@@ -8,7 +8,8 @@ OBJ="${ASM%.*}.o"
 BIN="${ASM%.*}"
 
 nasm -felf64 "$ASM" -o "$OBJ"                # assemble
-gcc "$OBJ" -o "$BIN" -Wl,-z,noexecstack     # link, disable exec stack :contentReference[oaicite:0]{index=0}
+# link object with no PIE to avoid relocation errors and disable executable stack
+gcc -no-pie "$OBJ" -o "$BIN" -Wl,-z,noexecstack
 if [ $? -ne 0 ]; then
   echo "link failed"
   exit 1

@@ -61,6 +61,7 @@ private:
   size_t fieldOffset(const RecordTypeSpec *rt, const std::string &field,
                      const TypeSpec **fieldType = nullptr) const;
   void genVarAddr(const VariableExpr *var);
+  const TypeSpec *resolveVarType(const VariableExpr *var) const;
 
   std::string m_output;
   std::vector<std::pair<std::string, size_t>> m_vars;
@@ -77,6 +78,12 @@ private:
   bool m_needFree{false};
   bool m_needPuts{false};
   bool m_needPrintf{false};
+  bool m_needFmtIntNoNL{false};
+  bool m_needFmtStr{false};
+  bool m_needFmtStrNoNL{false};
+  bool m_needFmtFloat{false};
+  bool m_needFmtFloatNoNL{false};
+  bool m_needSpaceStr{false};
   int m_labelCounter{0};
 };
 

@@ -45,6 +45,9 @@ std::string CodeGenerator::generate(const AST &ast) {
   m_varTypes.clear();
   m_ptrSizes.clear();
   m_needMalloc = m_needFree = m_needPuts = m_needPrintf = false;
+  m_needFmtIntNoNL = m_needFmtStr = m_needFmtStrNoNL = false;
+  m_needFmtFloat = m_needFmtFloatNoNL = false;
+  m_needSpaceStr = false;
   if (ast.root) {
     collectVars(ast.root.get());
     ast.root->accept(*this);
@@ -53,11 +56,25 @@ std::string CodeGenerator::generate(const AST &ast) {
 }
 
 void CodeGenerator::visitProgram(const Program &node) {
-  bool hasData = m_needPrintf || !m_strings.empty();
+  bool hasData = m_needPrintf || m_needFmtIntNoNL || m_needFmtStr ||
+                 m_needFmtStrNoNL || m_needFmtFloat || m_needFmtFloatNoNL ||
+                 m_needSpaceStr || !m_strings.empty();
   if (hasData) {
     emit("section .data\n");
     if (m_needPrintf)
       emit("fmt_int: db \"%d\", 10, 0\n");
+    if (m_needFmtIntNoNL)
+      emit("fmt_int_no_nl: db \"%d\", 0\n");
+    if (m_needFmtStr)
+      emit("fmt_str: db \"%s\", 10, 0\n");
+    if (m_needFmtStrNoNL)
+      emit("fmt_str_no_nl: db \"%s\", 0\n");
+    if (m_needFmtFloat)
+      emit("fmt_float: db \"%0.2f\", 10, 0\n");
+    if (m_needFmtFloatNoNL)
+      emit("fmt_float_no_nl: db \"%0.2f\", 0\n");
+    if (m_needSpaceStr)
+      emit("space_str: db \" \", 0\n");
     for (const auto &p : m_strings) {
       if (p.second.empty())
         emit(p.first + ": db 0\n");
@@ -433,35 +450,122 @@ void CodeGenerator::visitProcCall(const ProcCall &node) {
       emit("    call   free\n");
     }
 
-  } else if (node.name == "writeln" && !node.args.empty()) {
-    const Expression *e = node.args[0].get();
+  } else if (node.name == "writeln") {
+    if (node.args.size() == 1) {
+      const Expression *e = node.args[0].get();
 
-    // 1) string-literal → puts
-    if (auto *lit = dynamic_cast<const LiteralExpr *>(e)) {
-      if (lit->value.front() == '\'' && lit->value.back() == '\'') {
-        std::string lbl =
-            addString(lit->value.substr(1, lit->value.size() - 2));
-        emit("    mov    rdi, " + lbl + "\n");
-        emit("    call   puts\n");
+      if (auto *lit = dynamic_cast<const LiteralExpr *>(e)) {
+        if (lit->value.front() == '\'' && lit->value.back() == '\'') {
+          std::string lbl =
+              addString(lit->value.substr(1, lit->value.size() - 2));
+          emit("    mov    rdi, " + lbl + "\n");
+          emit("    call   puts\n");
+          return;
+        }
+        std::string val = lit->value;
+        if (isFloatLiteral(val))
+          val = floatToHex(val);
+        emit("    mov    rdi, fmt_int\n");
+        emit("    mov    rsi, " + val + "\n");
+        emit("    xor    rax, rax\n");
+        emit("    call   printf\n");
         return;
       }
-      std::string val = lit->value;
-      if (isFloatLiteral(val))
-        val = floatToHex(val);
+
       emit("    mov    rdi, fmt_int\n");
-      emit("    mov    rsi, " + val + "\n");
+      genExpr(e);
+      emit("    mov    rsi, rax\n");
       emit("    xor    rax, rax\n");
       emit("    call   printf\n");
       return;
     }
 
-    // 2) everything else → printf
-    // ensure data section has fmt_int declared and extern printf emitted
-    emit("    mov    rdi, fmt_int\n");
-    genExpr(e); // result → rax
-    emit("    mov    rsi, rax\n");
-    emit("    xor    rax, rax\n"); // SysV ABI vararg count
-    emit("    call   printf\n");
+    auto printArg = [&](const Expression *e, bool newline) {
+      if (auto *lit = dynamic_cast<const LiteralExpr *>(e)) {
+        if (lit->value.front() == '\'' && lit->value.back() == '\'') {
+          std::string lbl =
+              addString(lit->value.substr(1, lit->value.size() - 2));
+          if (newline) {
+            emit("    mov    rdi, " + lbl + "\n");
+            emit("    call   puts\n");
+          } else {
+            emit("    mov    rdi, fmt_str_no_nl\n");
+            emit("    mov    rsi, " + lbl + "\n");
+            emit("    xor    rax, rax\n");
+            emit("    call   printf\n");
+            if (lit->value == "':'") {
+              emit("    mov    rdi, space_str\n");
+              emit("    xor    rax, rax\n");
+              emit("    call   printf\n");
+            }
+          }
+          return;
+        }
+        std::string val = lit->value;
+        bool isFloat = isFloatLiteral(val);
+        if (isFloat)
+          val = floatToHex(val);
+        if (isFloat) {
+          emit(std::string("    mov    rdi, ") +
+               (newline ? "fmt_float" : "fmt_float_no_nl") + "\n");
+          emit("    sub    rsp, 8\n");
+          emit("    mov    rax, " + val + "\n");
+          emit("    movq   xmm0, rax\n");
+          emit("    mov    rax, 1\n");
+          emit("    call   printf\n");
+          emit("    add    rsp, 8\n");
+        } else {
+          emit(std::string("    mov    rdi, ") +
+               (newline ? "fmt_int" : "fmt_int_no_nl") + "\n");
+          emit("    mov    rsi, " + val + "\n");
+          emit("    xor    rax, rax\n");
+          emit("    call   printf\n");
+        }
+        return;
+      }
+      if (auto *var = dynamic_cast<const VariableExpr *>(e)) {
+        if (auto *t = dynamic_cast<const SimpleTypeSpec *>(resolveVarType(var))) {
+          if (t->basic == BasicType::String) {
+            genExpr(e);
+            if (newline) {
+              emit("    mov    rdi, rax\n");
+              emit("    call   puts\n");
+            } else {
+              emit("    mov    rdi, fmt_str_no_nl\n");
+              emit("    mov    rsi, rax\n");
+              emit("    xor    rax, rax\n");
+              emit("    call   printf\n");
+            }
+            return;
+          } else if (t->basic == BasicType::Real) {
+            genExpr(e);
+            emit(std::string("    mov    rdi, ") +
+                 (newline ? "fmt_float" : "fmt_float_no_nl") + "\n");
+            emit("    sub    rsp, 8\n");
+            emit("    movq   xmm0, rax\n");
+            emit("    mov    rax, 1\n");
+            emit("    call   printf\n");
+            emit("    add    rsp, 8\n");
+            return;
+          }
+        }
+      }
+      genExpr(e);
+      emit(std::string("    mov    rdi, ") +
+           (newline ? "fmt_int" : "fmt_int_no_nl") + "\n");
+      emit("    mov    rsi, rax\n");
+      emit("    xor    rax, rax\n");
+      emit("    call   printf\n");
+    };
+
+    if (node.args.empty()) {
+      std::string lbl = addString("");
+      emit("    mov    rdi, " + lbl + "\n");
+      emit("    call   puts\n");
+    } else {
+      for (size_t i = 0; i < node.args.size(); ++i)
+        printArg(node.args[i].get(), i + 1 == node.args.size());
+    }
     return;
   }
 }
@@ -822,6 +926,37 @@ void CodeGenerator::genVarAddr(const VariableExpr *var) {
   }
 }
 
+const TypeSpec *CodeGenerator::resolveVarType(const VariableExpr *var) const {
+  if (!var)
+    return nullptr;
+  const TypeSpec *type = getVarType(var->name);
+  if (auto *st = dynamic_cast<const SimpleTypeSpec *>(type)) {
+    auto it = m_typeDefs.find(st->name);
+    if (it != m_typeDefs.end())
+      type = it->second;
+  }
+  for (const auto &sel : var->selectors) {
+    if (sel.kind == VariableExpr::Selector::Kind::Pointer) {
+      if (auto *pt = dynamic_cast<const PointerTypeSpec *>(type))
+        type = pt->refType.get();
+      if (auto *st = dynamic_cast<const SimpleTypeSpec *>(type)) {
+        auto it = m_typeDefs.find(st->name);
+        if (it != m_typeDefs.end())
+          type = it->second;
+      }
+    } else if (sel.kind == VariableExpr::Selector::Kind::Field) {
+      const auto *rt = dynamic_cast<const RecordTypeSpec *>(type);
+      const TypeSpec *ft = nullptr;
+      fieldOffset(rt, sel.field, &ft);
+      type = ft;
+    } else if (sel.kind == VariableExpr::Selector::Kind::Index) {
+      if (auto *at = dynamic_cast<const ArrayTypeSpec *>(type))
+        type = at->elementType.get();
+    }
+  }
+  return type;
+}
+
 size_t CodeGenerator::typeSize(const TypeSpec *type) const {
   if (!type)
     return 0;
@@ -1013,35 +1148,84 @@ void CodeGenerator::collectVars(const ASTNode *node) {
     else if (pc->name == "dispose")
       m_needFree = true;
     else if (pc->name == "writeln") {
-      if (!pc->args.empty()) {
-
-        // only string literals or known string vars → puts, else → printf
-        if (auto *lit = dynamic_cast<const LiteralExpr *>(pc->args[0].get())) {
-
-          // literal string?
+      if (pc->args.size() == 1) {
+        const Expression *arg = pc->args[0].get();
+        if (auto *lit = dynamic_cast<const LiteralExpr *>(arg)) {
           if (lit->value.size() >= 2 && lit->value.front() == '\'' &&
-              lit->value.back() == '\'') {
+              lit->value.back() == '\'')
             m_needPuts = true;
+          else
+            m_needPrintf = true;
+        } else if (auto *var = dynamic_cast<const VariableExpr *>(arg)) {
+          if (auto *t = dynamic_cast<const SimpleTypeSpec *>(resolveVarType(var))) {
+            if (t->basic == BasicType::String)
+              m_needPrintf = true;
+            else
+              m_needPrintf = true;
           } else {
             m_needPrintf = true;
           }
         } else {
-          // any non‐literal (variable or expr) is numeric → printf
           m_needPrintf = true;
         }
-
-      } else if (const auto *lit =
-                     dynamic_cast<const LiteralExpr *>(pc->args[0].get())) {
-
-        cout << "Literal value: " << lit->value << endl;
-
-        if (lit->value.size() >= 2 && lit->value.front() == '\'' &&
-            lit->value.back() == '\'')
-          m_needPuts = true;
-        else
-          m_needPrintf = true;
       } else {
-        m_needPrintf = true;
+        // multiple arguments require printf for intermediate pieces
+        for (size_t i = 0; i < pc->args.size(); ++i) {
+          bool last = i + 1 == pc->args.size();
+          const Expression *arg = pc->args[i].get();
+          if (auto *lit = dynamic_cast<const LiteralExpr *>(arg)) {
+            if (lit->value.size() >= 2 && lit->value.front() == '\'' &&
+                lit->value.back() == '\'') {
+              if (last)
+                m_needPuts = true;
+              else {
+                m_needPrintf = true;
+                m_needFmtStrNoNL = true;
+                if (lit->value == "':'")
+                  m_needSpaceStr = true;
+              }
+            } else if (isFloatLiteral(lit->value)) {
+              m_needPrintf = true;
+              if (last)
+                m_needFmtFloat = true;
+              else
+                m_needFmtFloatNoNL = true;
+            } else {
+              m_needPrintf = true;
+              if (!last)
+                m_needFmtIntNoNL = true;
+            }
+          } else if (auto *var = dynamic_cast<const VariableExpr *>(arg)) {
+            if (auto *t = dynamic_cast<const SimpleTypeSpec *>(resolveVarType(var))) {
+              if (t->basic == BasicType::String) {
+                if (last)
+                  m_needPuts = true;
+                else {
+                  m_needPrintf = true;
+                  m_needFmtStrNoNL = true;
+                }
+              } else if (t->basic == BasicType::Real) {
+                m_needPrintf = true;
+                if (last)
+                  m_needFmtFloat = true;
+                else
+                  m_needFmtFloatNoNL = true;
+              } else {
+                m_needPrintf = true;
+                if (!last)
+                  m_needFmtIntNoNL = true;
+              }
+            } else {
+              m_needPrintf = true;
+              if (!last)
+                m_needFmtIntNoNL = true;
+            }
+          } else {
+            m_needPrintf = true;
+            if (!last)
+              m_needFmtIntNoNL = true;
+          }
+        }
       }
     }
     break;
