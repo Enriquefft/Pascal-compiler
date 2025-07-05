@@ -80,10 +80,10 @@ TEST(ArrayTests, Arr2) {
 
       {TT::Begin, "begin"},     {TT::Identifier, "a"},
       {TT::LeftBracket, "["},   {TT::Number, "1"},
-      {TT::RightBracket, "]"},  {TT::Colon, ":"},
-      {TT::Assign, "="},        {TT::Number, "0"},
-      {TT::Semicolon, ";"},     {TT::End, "end"},
-      {TT::Dot, "."},           {TT::EndOfFile, ""}};
+      {TT::RightBracket, "]"},  {TT::Assign, ":="},
+      {TT::Number, "0"},        {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},
+      {TT::EndOfFile, ""}};
 
   // AST building is unchanged...
   AST expected_ast{};
@@ -158,8 +158,7 @@ TEST(ArrayTests, Arr3) {
                                         {TT::Begin, "begin"},
                                         {TT::For, "for"},
                                         {TT::Identifier, "i"},
-                                        {TT::Colon, ":"},
-                                        {TT::Assign, "="},
+                                        {TT::Assign, ":="},
                                         {TT::Number, "1"},
                                         {TT::To, "to"},
                                         {TT::Number, "5"},
@@ -168,8 +167,7 @@ TEST(ArrayTests, Arr3) {
                                         {TT::LeftBracket, "["},
                                         {TT::Identifier, "i"},
                                         {TT::RightBracket, "]"},
-                                        {TT::Colon, ":"},
-                                        {TT::Assign, "="},
+                                        {TT::Assign, ":="},
                                         {TT::Identifier, "i"},
                                         {TT::Semicolon, ";"},
                                         {TT::End, "end"},
@@ -344,8 +342,7 @@ TEST(ArrayTests, Arr5) {
                                         {TT::LeftBracket, "["},
                                         {TT::Number, "1"},
                                         {TT::RightBracket, "]"},
-                                        {TT::Colon, ":"},
-                                        {TT::Assign, "="},
+                                        {TT::Assign, ":="},
                                         {TT::Number, "1"},
                                         {TT::Semicolon, ";"},
                                         {TT::End, "end"},

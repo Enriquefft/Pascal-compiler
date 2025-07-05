@@ -3,14 +3,11 @@
 TEST(ControlTests, IfStmt) {
   std::string input_str = "program test; begin if a > 0 then b := 1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},   {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},      {TT::Begin, "begin"},
-      {TT::If, "if"},             {TT::Identifier, "a"},
-      {TT::Greater, ">"},        {TT::Number, "0"},
-      {TT::Then, "then"},         {TT::Identifier, "b"},
-      {TT::Colon, ":"},          {TT::Assign, "="},
-      {TT::Number, "1"},         {TT::Semicolon, ";"},
-      {TT::End, "end"},          {TT::Dot, "."},
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::If, "if"},           {TT::Identifier, "a"},
+      {TT::Greater, ">"},       {TT::Number, "0"},        {TT::Then, "then"},
+      {TT::Identifier, "b"},    {TT::Assign, ":="},       {TT::Number, "1"},
+      {TT::Semicolon, ";"},     {TT::End, "end"},         {TT::Dot, "."},
       {TT::EndOfFile, ""}};
   AST expected_ast{};
 
@@ -49,17 +46,13 @@ TEST(ControlTests, IfElse) {
   std::string input_str =
       "program test; begin if a > 0 then b := 1 else b := 2; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},   {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},      {TT::Begin, "begin"},
-      {TT::If, "if"},             {TT::Identifier, "a"},
-      {TT::Greater, ">"},        {TT::Number, "0"},
-      {TT::Then, "then"},         {TT::Identifier, "b"},
-      {TT::Colon, ":"},          {TT::Assign, "="},
-      {TT::Number, "1"},         {TT::Else, "else"},
-      {TT::Identifier, "b"},     {TT::Colon, ":"},
-      {TT::Assign, "="},         {TT::Number, "2"},
-      {TT::Semicolon, ";"},      {TT::End, "end"},
-      {TT::Dot, "."},            {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::If, "if"},           {TT::Identifier, "a"},
+      {TT::Greater, ">"},       {TT::Number, "0"},        {TT::Then, "then"},
+      {TT::Identifier, "b"},    {TT::Assign, ":="},       {TT::Number, "1"},
+      {TT::Else, "else"},       {TT::Identifier, "b"},    {TT::Assign, ":="},
+      {TT::Number, "2"},        {TT::Semicolon, ";"},     {TT::End, "end"},
+      {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -100,16 +93,14 @@ TEST(ControlTests, IfElse) {
 }
 
 TEST(ControlTests, CaseStmt) {
-  std::string input_str =
-      "program test; begin case a of 1: b := 1; end; end.";
+  std::string input_str = "program test; begin case a of 1: b := 1; end; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::Case, "case"},      {TT::Identifier, "a"}, {TT::Of, "of"},
-      {TT::Number, "1"},       {TT::Colon, ":"},     {TT::Identifier, "b"},
-      {TT::Colon, ":"},        {TT::Assign, "="},    {TT::Number, "1"},
-      {TT::Semicolon, ";"},    {TT::End, "end"},     {TT::Semicolon, ";"},
-      {TT::End, "end"},        {TT::Dot, "."},       {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::Case, "case"},       {TT::Identifier, "a"},
+      {TT::Of, "of"},           {TT::Number, "1"},        {TT::Colon, ":"},
+      {TT::Identifier, "b"},    {TT::Assign, ":="},       {TT::Number, "1"},
+      {TT::Semicolon, ";"},     {TT::End, "end"},         {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},           {TT::EndOfFile, ""}};
 
   AST expected_ast{};
 
@@ -156,19 +147,14 @@ TEST(ControlTests, CaseStmt) {
 }
 
 TEST(ControlTests, WhileStmt) {
-  std::string input_str =
-      "program test; begin while a > 0 do a := a - 1; end.";
+  std::string input_str = "program test; begin while a > 0 do a := a - 1; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},   {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},      {TT::Begin, "begin"},
-      {TT::While, "while"},       {TT::Identifier, "a"},
-      {TT::Greater, ">"},        {TT::Number, "0"},
-      {TT::Do, "do"},            {TT::Identifier, "a"},
-      {TT::Colon, ":"},          {TT::Assign, "="},
-      {TT::Identifier, "a"},      {TT::Minus, "-"},
-      {TT::Number, "1"},         {TT::Semicolon, ";"},
-      {TT::End, "end"},          {TT::Dot, "."},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::While, "while"},     {TT::Identifier, "a"},
+      {TT::Greater, ">"},       {TT::Number, "0"},        {TT::Do, "do"},
+      {TT::Identifier, "a"},    {TT::Assign, ":="},       {TT::Identifier, "a"},
+      {TT::Minus, "-"},         {TT::Number, "1"},        {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -208,17 +194,14 @@ TEST(ControlTests, WhileStmt) {
 }
 
 TEST(ControlTests, ForStmt) {
-  std::string input_str =
-      "program test; begin for i:=1 to 10 do a:=i; end.";
+  std::string input_str = "program test; begin for i:=1 to 10 do a:=i; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"}, {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},    {TT::Begin, "begin"},
-      {TT::For, "for"},        {TT::Identifier, "i"}, {TT::Colon, ":"},
-      {TT::Assign, "="},       {TT::Number, "1"},     {TT::To, "to"},
-      {TT::Number, "10"},      {TT::Do, "do"},        {TT::Identifier, "a"},
-      {TT::Colon, ":"},        {TT::Assign, "="},     {TT::Identifier, "i"},
-      {TT::Semicolon, ";"},    {TT::End, "end"},      {TT::Dot, "."},
-      {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::For, "for"},         {TT::Identifier, "i"},
+      {TT::Assign, ":="},       {TT::Number, "1"},        {TT::To, "to"},
+      {TT::Number, "10"},       {TT::Do, "do"},           {TT::Identifier, "a"},
+      {TT::Assign, ":="},       {TT::Identifier, "i"},    {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -260,13 +243,12 @@ TEST(ControlTests, ForStmt) {
 TEST(ControlTests, RepeatStmt) {
   std::string input_str = "program test; begin repeat a:=a-1 until a=0; end.";
   std::vector<Token> expected_tokens = {
-      {TT::Program, "program"},   {TT::Identifier, "test"},
-      {TT::Semicolon, ";"},      {TT::Begin, "begin"},
-      {TT::Repeat, "repeat"},     {TT::Identifier, "a"}, {TT::Colon, ":"},
-      {TT::Assign, "="},          {TT::Identifier, "a"}, {TT::Minus, "-"},
-      {TT::Number, "1"},          {TT::Until, "until"},  {TT::Identifier, "a"},
-      {TT::Equal, "="},           {TT::Number, "0"},     {TT::Semicolon, ";"},
-      {TT::End, "end"},           {TT::Dot, "."},        {TT::EndOfFile, ""}};
+      {TT::Program, "program"}, {TT::Identifier, "test"}, {TT::Semicolon, ";"},
+      {TT::Begin, "begin"},     {TT::Repeat, "repeat"},   {TT::Identifier, "a"},
+      {TT::Assign, ":="},       {TT::Identifier, "a"},    {TT::Minus, "-"},
+      {TT::Number, "1"},        {TT::Until, "until"},     {TT::Identifier, "a"},
+      {TT::Equal, "="},         {TT::Number, "0"},        {TT::Semicolon, ";"},
+      {TT::End, "end"},         {TT::Dot, "."},           {TT::EndOfFile, ""}};
   AST expected_ast{};
 
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
@@ -302,5 +284,3 @@ TEST(ControlTests, RepeatStmt) {
                              "    ret\n";
   run_full(input_str, expected_tokens, expected_ast, expected_asm, "");
 }
-
-
