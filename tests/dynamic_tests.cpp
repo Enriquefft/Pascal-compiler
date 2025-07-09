@@ -166,8 +166,6 @@ TEST(DynamicTests, Dyn5) {
   std::vector<std::unique_ptr<pascal::Declaration>> decls;
   std::vector<std::unique_ptr<pascal::Statement>> stmts;
   {
-    std::vector<std::unique_ptr<pascal::Expression>> condArgs;
-    condArgs.emplace_back(std::make_unique<pascal::VariableExpr>("p"));
     auto neq = std::make_unique<pascal::BinaryExpr>(
         std::make_unique<pascal::VariableExpr>("p"), "<>",
         std::make_unique<pascal::VariableExpr>("nil"));
